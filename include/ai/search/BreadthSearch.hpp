@@ -1,11 +1,9 @@
 #ifndef AI_SEARCH_DEPTHSEARCH_HPP
 #define AI_SEARCH_DEPTHSEARCH_HPP
 
-#include <vector>
 #include <queue>
 #include <set>
 #include <memory>
-#include <algorithm>
 
 namespace ai {
 namespace search {
@@ -14,30 +12,20 @@ template <typename Problem>
 class BreadthSearch {
 public:
     using NodeType = typename Problem::NodeType;
-    using StateType = typename NodeType::StateType;
-    using ActionType = typename NodeType::ActionType;
+    using StateType = typename Problem::StateType;
+    using ActionType = typename Problem::ActionType;
+    using ResultType = typename Problem::ResultType;
 
 private:
-    const StateType begin_, end_;
+    const Problem& problem_;
     
 public:
-    BreadthSearch(const StateType& begin, const StateType& end)
-        : begin_{begin}, end_{end} {}
+    BreadthSearch(const Problem& problem): problem_{problem} {}
 
-    std::vector<ActionType> solution(NodeType *node) {
-        std::vector<ActionType> actions;
-        while (node->parent() != nullptr) {
-            actions.push_back(node->action());
-            node = node->parent();
-        }
-        std::reverse(actions.begin(), actions.end());
-        return actions;
-    }
-
-    std::vector<ActionType> solve() {
-        NodeType root{begin_};
-        if (root.state() == end_)
-            return solution(&root);
+    ResultType solve() {
+        NodeType root{problem_.initial_state()};
+        if (problem_.is_terminal(&root))
+            return problem_.solution(&root);
 
         std::vector<std::unique_ptr<NodeType>> nodes;
         nodes.reserve(1000);
@@ -56,14 +44,15 @@ public:
             explored.insert(node->state());
             for (auto action: node->state().legalActions()) {
                 auto child = std::make_unique<NodeType>(node, action);
-                if (explored.find(child->state()) == explored.end()) {
-                    if (child->state() == end_)
-                        return solution(child.get());
+                if (explored.find(child->state()) != explored.end())
+                    continue;
 
-                    frontier.push(child.get());
-                    explored.insert(child->state());
-                    nodes.push_back(std::move(child));
-                }
+                if (problem_.is_terminal(child.get()))
+                    return problem_.solution(child.get());
+
+                frontier.push(child.get());
+                explored.insert(child->state());
+                nodes.push_back(std::move(child));
             }
         }
     }

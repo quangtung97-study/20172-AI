@@ -15,4 +15,4 @@ target_link_libraries(test_main
     pthread
 )
 
-ADD_TEST(NAME TestMain COMMAND test_main)
+ADD_TEST(NAME Main COMMAND test_main)
