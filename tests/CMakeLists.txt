@@ -8,6 +8,9 @@ add_executable(test_main
 
     # Image Puzzle
     ai/search/imagepuzzle/StateTest.cpp
+    ai/search/imagepuzzle/NodeTest.cpp
+
+    ai/search/BreadthSearchTest.cpp
 )
 
 target_link_libraries(test_main

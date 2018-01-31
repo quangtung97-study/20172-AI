@@ -58,6 +58,13 @@ TEST(State, legalActions) {
     ASSERT_TRUE(state == compared);
 }
 
+TEST(State, lessthan) {
+    State state1{0, 1, 2, 3, 4, 5, 6, 7, 8};
+    State state2{2, 3, 1, 0, 4, 5, 6, 7, 8};
+    ASSERT_TRUE(state1 < state2);
+    ASSERT_FALSE(state2 < state1);
+}
+
 } // namespace imagepuzzle
 } // namespace search
 } // namespace ai

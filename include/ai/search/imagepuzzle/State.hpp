@@ -13,7 +13,8 @@ enum class Action {
     LEFT,
     RIGHT, 
     UP, 
-    DOWN
+    DOWN,
+    NONE
 };
 
 #define IMAGE_SIZE 3
@@ -58,14 +59,25 @@ public:
         return actions;
     }
 
-    bool operator == (const State& other) {
+    bool operator == (const State& other) const {
         return std::equal(array_.begin(), array_.end(), 
                 other.array_.begin(), other.array_.end());
     }
 
-    bool operator != (const State& other) {
+    bool operator != (const State& other) const {
         return !std::equal(array_.begin(), array_.end(), 
                 other.array_.begin(), other.array_.end());
+    }
+
+    bool operator < (const State& other) const {
+        for (int i = 0; i < IMAGE_SIZE * IMAGE_SIZE; i++) {
+            if (array_[i] < other.array_[i])
+                return true;
+            else if (array_[i] > other.array_[i])
+                return false;
+        }
+
+        return false;
     }
 
     void move(Action action) {
@@ -89,6 +101,9 @@ public:
             case Action::DOWN:
                 hole_index_ += IMAGE_SIZE;
                 std::swap(array_[prev_hole_index], array_[hole_index_]);
+                break;
+
+            default:
                 break;
         }
     }
