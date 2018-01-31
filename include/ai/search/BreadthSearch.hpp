@@ -51,6 +51,7 @@ public:
         while (true) {
             if (frontier.empty()) 
                 throw std::runtime_error("Can't solve with breath-first search");
+
             NodeType *node = frontier.front(); frontier.pop();
             explored.insert(node->state());
             for (auto action: node->state().legalActions()) {

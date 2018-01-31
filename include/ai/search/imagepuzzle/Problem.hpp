@@ -12,11 +12,6 @@ class Problem {
 public:
     using NodeType = Node;
 
-    static std::unique_ptr<Node> child_of(Node *parent, Action action) {
-        auto node = std::make_unique<Node>(parent, action);
-        return node;
-    }
-
 }; // class Problem
 
 } // namespace imagepuzzle
