@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "Source: "
+git ls-files "*.hpp" "*.cpp" | grep -v test | xargs wc -l
+echo ""
+echo "Test: "
+git ls-files "*.hpp" "*.cpp" | grep test | xargs wc -l

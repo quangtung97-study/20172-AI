@@ -1,0 +1,20 @@
+dist: trusty
+sudo: false
+language: cpp
+
+addons:
+    apt:
+        sources:
+            - ubuntu-toolchain-r-test
+        packages:
+            - g++-5
+
+script:
+    - CXX=/usr/bin/g++-5
+    - CC=/usr/bin/gcc-5
+    - ./build_google_mock.sh
+    - mkdir build
+    - cd build
+    - cmake ..
+    - make -j4
+    - ctest
