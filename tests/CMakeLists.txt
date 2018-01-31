@@ -5,13 +5,9 @@ link_directories(../lib/test)
 add_executable(test_main 
     test_example.cpp
     ai/game/ListTest.cpp
-
-    # Image Puzzle
-    ai/search/imagepuzzle/StateTest.cpp
-    ai/search/imagepuzzle/NodeTest.cpp
-
-    ai/search/BreadthSearchTest.cpp
 )
+
+add_subdirectory(ai/search)
 
 target_link_libraries(test_main
     src
