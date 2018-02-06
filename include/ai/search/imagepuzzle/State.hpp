@@ -25,6 +25,14 @@ private:
     std::array<ValueType, IMAGE_SIZE * IMAGE_SIZE> array_;
     int hole_index_;
 
+    int x_coordinate_of(int index) const {
+        return index / IMAGE_SIZE + 1;
+    }
+
+    int y_coordinate_of(int index) const {
+        return index % IMAGE_SIZE + 1;
+    }
+
 public:
     State() {
         for (int i = 0; i < IMAGE_SIZE * IMAGE_SIZE; i++) {
@@ -42,6 +50,24 @@ public:
     ValueType operator() (int i, int j) const {
         i--; j--;
         return array_[i * IMAGE_SIZE + j];
+    }
+
+    float manhattan_distance_to(const State& other) const {
+        float distance = 0.0f;
+        for (int i = 0; i < IMAGE_SIZE * IMAGE_SIZE; i++) {
+            if (array_[i] == 0)
+                continue;
+            auto value = array_[i];
+            auto find_it = std::find(other.array_.begin(), other.array_.end(), value);
+
+            int y2 = y_coordinate_of(find_it - other.array_.begin());
+            int y1 = y_coordinate_of(i);
+            int x2 = x_coordinate_of(find_it - other.array_.begin());
+            int x1 = x_coordinate_of(i);
+            
+            distance += std::abs(y2 - y1) + std::abs(x2 - x1);
+        }
+        return distance;
     }
 
     std::vector<Action> legalActions() const {

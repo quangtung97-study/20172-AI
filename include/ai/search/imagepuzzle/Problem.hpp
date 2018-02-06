@@ -26,11 +26,11 @@ public:
 
     const State& initial_state() const { return begin_; }
 
-    bool is_terminal(Node *node) const {
+    bool is_terminal(const Node *node) const {
         return node->state() == end_;
     }
 
-    ResultType solution(NodeType *node) const {
+    ResultType solution(const NodeType *node) const {
         std::vector<ActionType> actions;
         while (node->parent() != nullptr) {
             actions.push_back(node->action());
@@ -38,6 +38,20 @@ public:
         }
         std::reverse(actions.begin(), actions.end());
         return actions;
+    }
+
+    float h(const NodeType *node) const {
+        auto& state = node->state();
+        return state.manhattan_distance_to(end_);
+    }
+
+    float g(const NodeType *node) const {
+        int count = 0;
+        while (node->parent() != nullptr) {
+            count++;
+            node = node->parent();
+        }
+        return count;
     }
 
 }; // class Problem

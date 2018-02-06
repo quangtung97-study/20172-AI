@@ -10,7 +10,7 @@ namespace imagepuzzle {
 class Node {
 private:
     State state_;
-    Node *parent_;
+    const Node *parent_;
     Action action_;
 
 public:
@@ -20,7 +20,7 @@ public:
     Node(const State& state)
         : state_{state}, parent_{nullptr}, action_{Action::NONE} {}
 
-    Node(Node *parent, Action action)
+    Node(const Node *parent, Action action)
         : state_{parent->state()}, parent_{parent}, action_{action} 
     {
         state_.move(action);
@@ -28,7 +28,7 @@ public:
 
     const State& state() const { return state_; }
 
-    Node *parent() const { return parent_; }
+    const Node *parent() const { return parent_; }
 
     Action action() const { return action_; }
 

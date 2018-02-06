@@ -10,49 +10,58 @@ namespace search {
 
 template <typename Problem>
 class BreadthSearch {
-public:
+private:
     using NodeType = typename Problem::NodeType;
     using StateType = typename Problem::StateType;
-    using ActionType = typename Problem::ActionType;
-    using ResultType = typename Problem::ResultType;
 
-private:
     const Problem& problem_;
+
+    std::set<StateType> explored_;
+    std::vector<std::unique_ptr<NodeType>> nodes_;
+    std::queue<const NodeType *> frontier_;
+
+    void init_containers(const NodeType *root) {
+        explored_.insert(root->state());
+        nodes_.reserve(1000);
+        frontier_.push(root);
+    }
+
+    bool state_explored(const StateType& state) const {
+        return explored_.find(state) != explored_.end();
+    }
+
+    void insert_new_node(std::unique_ptr<NodeType> node) {
+        frontier_.push(node.get());
+        explored_.insert(node->state());
+        nodes_.push_back(std::move(node));
+    }
     
 public:
     BreadthSearch(const Problem& problem): problem_{problem} {}
 
-    ResultType solve() {
+    auto solve() {
         NodeType root{problem_.initial_state()};
         if (problem_.is_terminal(&root))
             return problem_.solution(&root);
 
-        std::vector<std::unique_ptr<NodeType>> nodes;
-        nodes.reserve(1000);
-
-        std::set<StateType> explored;
-        explored.insert(root.state());
-
-        std::queue<NodeType *> frontier;
-        frontier.push(&root);
+        init_containers(&root);
 
         while (true) {
-            if (frontier.empty()) 
+            if (frontier_.empty()) 
                 throw std::runtime_error("Can't solve with breath-first search");
 
-            NodeType *node = frontier.front(); frontier.pop();
-            explored.insert(node->state());
+            auto node = frontier_.front(); 
+            frontier_.pop();
+
             for (auto action: node->state().legalActions()) {
                 auto child = std::make_unique<NodeType>(node, action);
-                if (explored.find(child->state()) != explored.end())
+                if (state_explored(child->state()))
                     continue;
 
                 if (problem_.is_terminal(child.get()))
                     return problem_.solution(child.get());
 
-                frontier.push(child.get());
-                explored.insert(child->state());
-                nodes.push_back(std::move(child));
+                insert_new_node(std::move(child));
             }
         }
     }
