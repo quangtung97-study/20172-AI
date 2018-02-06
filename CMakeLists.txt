@@ -4,6 +4,8 @@ project(AI)
 
 set(CMAKE_CXX_STANDARD 14)
 
+set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+
 include_directories(./include)
 
 add_subdirectory(src)
