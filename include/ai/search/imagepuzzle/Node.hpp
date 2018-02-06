@@ -12,16 +12,18 @@ private:
     State state_;
     const Node *parent_;
     Action action_;
+    float path_cost_;
 
 public:
     using StateType = State;
     using ActionType = Action;
 
     Node(const State& state)
-        : state_{state}, parent_{nullptr}, action_{Action::NONE} {}
+        : state_{state}, parent_{nullptr}, action_{Action::NONE}, path_cost_{0} {}
 
     Node(const Node *parent, Action action)
-        : state_{parent->state()}, parent_{parent}, action_{action} 
+        : state_{parent->state()}, parent_{parent}, action_{action}, 
+        path_cost_{parent->path_cost_ + 1}
     {
         state_.move(action);
     }
@@ -29,6 +31,8 @@ public:
     const State& state() const { return state_; }
 
     const Node *parent() const { return parent_; }
+
+    float path_cost() const { return path_cost_; }
 
     Action action() const { return action_; }
 

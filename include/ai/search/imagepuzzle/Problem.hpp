@@ -18,7 +18,6 @@ public:
     using NodeType = Node;
     using StateType = State;
     using ActionType = Action;
-    using ResultType = std::vector<Action>;
 
 public:
     Problem(const State& begin, const State& end) 
@@ -30,7 +29,7 @@ public:
         return node->state() == end_;
     }
 
-    ResultType solution(const NodeType *node) const {
+    auto solution(const NodeType *node) const {
         std::vector<ActionType> actions;
         while (node->parent() != nullptr) {
             actions.push_back(node->action());
@@ -46,12 +45,7 @@ public:
     }
 
     float g(const NodeType *node) const {
-        int count = 0;
-        while (node->parent() != nullptr) {
-            count++;
-            node = node->parent();
-        }
-        return count;
+        return node->path_cost();
     }
 
 }; // class Problem
