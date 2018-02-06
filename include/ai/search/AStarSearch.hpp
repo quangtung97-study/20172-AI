@@ -43,7 +43,7 @@ private:
         heap_.push(root);
     }
 
-    bool state_explored(const StateType& state) {
+    bool state_explored(const StateType& state) const {
         return explored_.find(state) != explored_.end();
     }
 

@@ -2,6 +2,7 @@
 #define AI_SEARCH_IMAGEPUZZLE_NODE_HPP
 
 #include "State.hpp"
+#include <limits>
 
 namespace ai {
 namespace search {
@@ -12,7 +13,8 @@ private:
     State state_;
     const Node *parent_;
     Action action_;
-    float path_cost_;
+    const float path_cost_;
+    mutable float heuristic_value_ = std::numeric_limits<float>::max();
 
 public:
     using StateType = State;
@@ -33,6 +35,10 @@ public:
     const Node *parent() const { return parent_; }
 
     float path_cost() const { return path_cost_; }
+
+    void heuristic_value(float value) const { heuristic_value_ = value; }
+
+    float heuristic_value() const { return heuristic_value_; }
 
     Action action() const { return action_; }
 

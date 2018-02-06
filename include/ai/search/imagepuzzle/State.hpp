@@ -33,6 +33,10 @@ private:
         return index % IMAGE_SIZE + 1;
     }
 
+    int index_of(ValueType value) const {
+        return std::find(array_.begin(), array_.end(), value) - array_.begin();
+    }
+
 public:
     State() {
         for (int i = 0; i < IMAGE_SIZE * IMAGE_SIZE; i++) {
@@ -43,8 +47,7 @@ public:
 
     State(std::initializer_list<ValueType> values) {
         std::copy(values.begin(), values.end(), array_.begin());
-        auto it = std::find(array_.begin(), array_.end(), 0);
-        hole_index_ = it - array_.begin();
+        hole_index_ = index_of(0);
     }
 
     ValueType operator() (int i, int j) const {
@@ -57,12 +60,12 @@ public:
         for (int i = 0; i < IMAGE_SIZE * IMAGE_SIZE; i++) {
             if (array_[i] == 0)
                 continue;
-            auto value = array_[i];
-            auto find_it = std::find(other.array_.begin(), other.array_.end(), value);
 
-            int y2 = y_coordinate_of(find_it - other.array_.begin());
+            int other_index = other.index_of(array_[i]);
+
+            int y2 = y_coordinate_of(other_index);
             int y1 = y_coordinate_of(i);
-            int x2 = x_coordinate_of(find_it - other.array_.begin());
+            int x2 = x_coordinate_of(other_index);
             int x1 = x_coordinate_of(i);
             
             distance += std::abs(y2 - y1) + std::abs(x2 - x1);
@@ -70,8 +73,9 @@ public:
         return distance;
     }
 
-    std::vector<Action> legalActions() const {
+    auto legalActions() const {
         std::vector<Action> actions;
+        actions.reserve(4);
         int col = hole_index_ % IMAGE_SIZE + 1;
         int row = hole_index_ / IMAGE_SIZE + 1;
         if (col > 1) 

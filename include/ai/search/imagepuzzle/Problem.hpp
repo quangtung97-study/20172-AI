@@ -40,8 +40,12 @@ public:
     }
 
     float h(const NodeType *node) const {
-        auto& state = node->state();
-        return state.manhattan_distance_to(end_);
+        if (node->heuristic_value() == std::numeric_limits<float>::max()) {
+            auto& state = node->state();
+            node->heuristic_value(state.manhattan_distance_to(end_));
+            return node->heuristic_value();
+        }
+        return node->heuristic_value();
     }
 
     float g(const NodeType *node) const {
