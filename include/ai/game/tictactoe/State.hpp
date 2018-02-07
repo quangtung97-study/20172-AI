@@ -12,10 +12,23 @@ namespace tictactoe {
 
 class Action {
 private:
-    const int x_, y_;
+    int x_, y_;
 
 public:
     Action(int x, int y): x_{x}, y_{y} {}
+
+    Action(): Action(0, 0) {}
+
+    Action(const Action& other) {
+        x_ = other.x_;
+        y_ = other.y_;
+    }
+
+    Action& operator = (const Action& other) {
+        x_ = other.x_;
+        y_ = other.y_;
+        return *this;
+    }
 
     int x() const { return x_; }
 
@@ -35,6 +48,9 @@ public:
         X, 
         O
     };
+
+    using ActionType = Action;
+    using PlayerType = Player;
 
 private:
     const Player first_player_;
@@ -84,6 +100,11 @@ public:
         std::fill(it, cells_.end(), NONE);
     }
 
+    State(const State& other): first_player_{other.first_player_} {
+        next_player_ = other.next_player_;
+        cells_ = other.cells_;
+    }
+
     Player next_player() const { return next_player_; }
 
     auto operator () (int x, int y) const {
@@ -108,6 +129,7 @@ public:
 
     auto legalActions() const {
         std::vector<Action> actions;
+        actions.reserve(9);
         for (int i = 0; i < MATRIX_SIZE * MATRIX_SIZE; i++) {
             if (cells_[i] == NONE)
                 actions.push_back(Action{x_coordinate_of(i), y_coordinate_of(i)});

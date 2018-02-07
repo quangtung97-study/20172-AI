@@ -10,11 +10,11 @@ include_directories(./include)
 
 add_subdirectory(src)
 
-add_executable(main 
-    src/main.cpp
+add_executable(play_tictactoe
+    src/play_tictactoe.cpp
 )
 
-target_link_libraries(main 
+target_link_libraries(play_tictactoe 
     src
 )
 
