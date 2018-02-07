@@ -7,12 +7,13 @@ add_executable(test_main
     ai/game/ListTest.cpp
 )
 
-add_subdirectory(ai/search)
-
 target_link_libraries(test_main
     src
     gmock_main
     pthread
 )
+
+add_subdirectory(ai/search)
+add_subdirectory(ai/game)
 
 ADD_TEST(NAME Main COMMAND test_main)
