@@ -15,5 +15,6 @@ target_link_libraries(test_main
 
 add_subdirectory(ai/search)
 add_subdirectory(ai/game)
+add_subdirectory(ai/andor)
 
 ADD_TEST(NAME Main COMMAND test_main)

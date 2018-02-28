@@ -20,5 +20,7 @@ target_link_libraries(test_ai_game_minimax
     pthread
 )
 
+add_subdirectory(gomoku)
+
 ADD_TEST(NAME TicTacToe COMMAND test_ai_game_tictactoe)
 ADD_TEST(NAME Minimax COMMAND test_ai_game_minimax)
