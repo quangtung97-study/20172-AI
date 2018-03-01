@@ -1,20 +1,12 @@
 #ifndef AI_GAME_GOMOKU_HEURISTIC_HPP
 #define AI_GAME_GOMOKU_HEURISTIC_HPP
 
-#include <vector>
 #include <bitset>
+#include "Basic.hpp"
 
 namespace ai {
 namespace game {
 namespace gomoku {
-
-enum class Cell: char {
-    NONE = 0,
-    AI = 1, 
-    HUMAN = -1
-};
-
-using Line = std::vector<Cell>;
 
 class LineView {
 private:
@@ -52,6 +44,8 @@ std::bitset<MAX_BIT_COUNT> get_segment_bitset(LineView line_view, Cell compared_
 typedef std::vector<SegmentInfo> SegmentInfoList;
 
 SegmentInfoList get_segment_infos(const Line& line, Cell compared_value);
+
+float score_of(SegmentInfo segment);
 
 } // namespace gomoku
 } // namespace game

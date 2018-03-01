@@ -2,6 +2,8 @@ project(tests-ai-game-gomoku)
 
 add_executable(test_ai_game_gomoku
     HeuristicTest.cpp
+    InfiniteMatrixTest.cpp
+    StateTest.cpp
 )
 
 target_link_libraries(test_ai_game_gomoku

@@ -137,6 +137,48 @@ TEST(Heuristic, reverse_search) {
     ASSERT_EQ(it, line1.begin() + 1);
 }
 
+int index_in_weight_table_of(SegmentInfo segment);
+
+TEST(Heuristic, segment_scoring_one) {
+    SegmentInfo segment;
+    segment.cells = 0b1;
+    segment.distances[0] = SegmentInfo::Infinity;
+    segment.distances[1] = SegmentInfo::Infinity;
+    ASSERT_DOUBLE_EQ(score_of(segment), 1);
+
+    segment.distances[0] = SegmentInfo::One;
+    segment.distances[1] = SegmentInfo::Infinity;
+    ASSERT_DOUBLE_EQ(score_of(segment), 0.75);
+
+    segment.distances[0] = SegmentInfo::Infinity;
+    segment.distances[1] = SegmentInfo::One;
+    ASSERT_DOUBLE_EQ(score_of(segment), 0.75);
+
+    segment.distances[0] = SegmentInfo::Zero;
+    segment.distances[1] = SegmentInfo::Infinity;
+    ASSERT_DOUBLE_EQ(score_of(segment), 0.5);
+
+    segment.distances[0] = SegmentInfo::Infinity;
+    segment.distances[1] = SegmentInfo::Zero;
+    ASSERT_DOUBLE_EQ(score_of(segment), 0.5);
+
+    segment.distances[0] = SegmentInfo::Zero;
+    segment.distances[1] = SegmentInfo::Zero;
+    ASSERT_DOUBLE_EQ(score_of(segment), 0);
+
+    segment.distances[0] = SegmentInfo::One;
+    segment.distances[1] = SegmentInfo::Zero;
+    ASSERT_DOUBLE_EQ(score_of(segment), 0.25);
+
+    segment.distances[0] = SegmentInfo::Zero;
+    segment.distances[1] = SegmentInfo::One;
+    ASSERT_DOUBLE_EQ(score_of(segment), 0.25);
+
+    segment.distances[0] = SegmentInfo::One;
+    segment.distances[1] = SegmentInfo::One;
+    ASSERT_DOUBLE_EQ(score_of(segment), 0.5);
+}
+
 } // namespace gomoku
 } // namespace game
 } // namespace ai
