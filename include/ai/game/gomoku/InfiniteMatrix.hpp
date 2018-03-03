@@ -11,7 +11,7 @@ namespace gomoku {
 
 struct Frame {
     int x = 0, y = 0;
-    int w = 1, h = 1;
+    int w = 0, h = 0;
 };
 
 int index_of(int x, int y, Frame frame);
@@ -36,6 +36,10 @@ std::vector<Type> frame_changed_copy(
     return result;
 }
 
+Frame new_inused_frame(Frame old_inused, int x, int y);
+
+void aligned_extend_range(int& begin, int& size, int new_value, bool& changed);
+
 template <typename Type>
 class InfiniteMatrix {
 private:
@@ -57,30 +61,15 @@ public:
     }
 
     Type& operator () (int x, int y) {
-        bool size_changed = false;
+        bool changed = false;
         Frame new_frame = frame_;
 
-        if (x >= frame_.x + frame_.w) {
-            size_changed = true;
-            new_frame.w = align_size(frame_.w, x - frame_.x);
-        }
-        else if (x < frame_.x) {
-            size_changed = true;
-            new_frame.w = align_size(frame_.w, x - frame_.x);
-            new_frame.x = align_distance(frame_.w, x - frame_.x) + frame_.x;
-        }
+        inused_ = new_inused_frame(inused_, x, y);
 
-        if (y >= frame_.y + frame_.h) {
-            size_changed = true;
-            new_frame.h = align_size(frame_.h, y - frame_.y);
-        }
-        else if (y < frame_.y) {
-            size_changed = true;
-            new_frame.h = align_size(frame_.h, y - frame_.y);
-            new_frame.y = align_distance(frame_.h, y - frame_.y) + frame_.y;
-        }
+        aligned_extend_range(new_frame.x, new_frame.w, x, changed);
+        aligned_extend_range(new_frame.y, new_frame.h, y, changed);
 
-        if (size_changed) {
+        if (changed) {
             data_ = frame_changed_copy(data_, frame_, new_frame);
             frame_ = new_frame;
         }
@@ -94,7 +83,6 @@ public:
 
     auto size() const { return data_.size(); }
 };
-
 } // namespace gomoku
 } // namespace game
 } // namespace ai

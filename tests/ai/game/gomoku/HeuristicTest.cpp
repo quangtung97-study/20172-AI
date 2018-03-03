@@ -67,7 +67,7 @@ TEST(Heuristic, get_segment_infos_distances) {
     ASSERT_EQ(ai_segments[1].distances[0], SegmentInfo::One);
     ASSERT_EQ(ai_segments[1].distances[1], SegmentInfo::Infinity);
 
-    Line line2{O, N, N, N, X, X, X, N};
+    Line line2{N, N, O, N, N, N, X, X, X, N, N};
     ai_segments = get_segment_infos(line2, X);
     ASSERT_EQ(ai_segments.size(), 1);
     ASSERT_EQ(ai_segments[0].cells, 0b111);

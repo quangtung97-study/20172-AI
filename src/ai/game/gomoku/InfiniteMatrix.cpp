@@ -25,6 +25,43 @@ int align_distance(int old, int d) {
     return ((d + 1 - old) / old) * old;
 }
 
+void aligned_extend_range(int& begin, int& size, int new_value, bool& changed) {
+    int end = begin + size;
+    int old_begin = begin;
+    int old_size = size;
+
+    if (new_value >= end) {
+        changed = true;
+        size = align_size(old_size, new_value - old_begin);
+    }
+    else if (new_value < old_begin) {
+        changed = true;
+        size = align_size(old_size, new_value - old_begin);
+        begin = align_distance(old_size, new_value - old_begin) + old_begin;
+    }
+}
+
+void extend_range(int& begin, int &size, int new_value) {
+    if (size == 0) {
+        size = 1;
+        begin = new_value;
+        return;
+    }
+
+    int end = begin + size;
+    if (new_value < begin) 
+        begin = new_value;
+    else if (new_value >= end) 
+        end = new_value + 1;
+    size = end - begin;
+}
+
+Frame new_inused_frame(Frame frame, int x, int y) {
+    extend_range(frame.x, frame.w, x);
+    extend_range(frame.y, frame.h, y);
+    return frame;
+}
+
 } // namespace gomoku
 } // namespace game
 } // namespace ai
