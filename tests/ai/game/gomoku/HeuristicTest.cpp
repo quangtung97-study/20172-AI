@@ -185,6 +185,9 @@ TEST(Heuristic, score_of_line) {
     line.push_back(X);
     ASSERT_EQ(line[3], X);
     ASSERT_DOUBLE_EQ(score_of_line(line, X), 20);
+
+    Line line2{N, X, N};
+    ASSERT_DOUBLE_EQ(score_of_line(line2, X), 1);
 }
 
 } // namespace gomoku

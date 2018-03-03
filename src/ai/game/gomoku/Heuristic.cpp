@@ -94,7 +94,7 @@ SegmentInfoList get_segment_infos(const Line& line, Cell compared_value) {
             ++it;
             if (it == line.end() || *it == inverse_of(compared_value)) {
                 SegmentInfo info;
-                auto segment_near_end = reverse_search(it, line.begin(), compared_value);
+                auto segment_near_end = reverse_search(it - 1, line.begin(), compared_value);
                 info.cells = get_segment_bitset(LineView{segment_begin, segment_near_end + 1}, compared_value);
                 info.distances[0] = left_distance_of(segment_begin, line.begin());
 

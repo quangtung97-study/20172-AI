@@ -1,7 +1,6 @@
 #include <ai/game/gomoku/State.hpp>
 #include <ai/game/gomoku/Heuristic.hpp>
 #include <algorithm>
-#include <iostream>
 
 namespace ai {
 namespace game {
@@ -87,43 +86,25 @@ void get_second_diagonal_line(Line& line, const InfiniteMatrix<Cell>& cells, Act
     }
 }
 
-void print_line(const Line& line) {
-    for (auto point: line) {
-        std::cerr << (int)point << " ";
-    }
-    std::cerr << std::endl;
-}
-
 float get_sum_lines_hvalue_at(
         const InfiniteMatrix<Cell>& cells, 
         Action action, Cell current_player)
 {
     float result = 0.0f;
     static Line line(100);
-    std::fill(line.begin(), line.end(), Cell::NONE);
     line.clear();
 
     get_vertical_line(line, cells, action);
     result += score_of_line(line, current_player);
-    print_line(line);
-    std::cerr << result << std::endl;
 
     get_horizontal_line(line, cells, action);
     result += score_of_line(line, current_player);
-    print_line(line);
-    std::cerr << result << std::endl;
 
-    std::fill(line.begin(), line.end(), Cell::NONE);
     get_first_diagonal_line(line, cells, action);
     result += score_of_line(line, current_player);
-    print_line(line);
-    std::cerr << result << std::endl;
 
-    std::fill(line.begin(), line.end(), Cell::NONE);
     get_second_diagonal_line(line, cells, action);
     result += score_of_line(line, current_player);
-    print_line(line);
-    std::cerr << result << std::endl;
 
     return result;
 }
