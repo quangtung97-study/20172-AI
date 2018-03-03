@@ -15,7 +15,7 @@ struct Frame {
 };
 
 int index_of(int x, int y, Frame frame);
-int fall_inside(int x, int y, Frame frame);
+bool fall_inside(int x, int y, Frame frame);
 int align_size(int old, int d);
 int align_distance(int old, int d);
 
@@ -52,6 +52,8 @@ public:
 
     InfiniteMatrix(int init_matrix_size) {
         data_.resize(init_matrix_size * init_matrix_size);
+        std::fill(data_.begin(), data_.end(), Type{});
+
         frame_.x = frame_.y = -init_matrix_size / 2;
         frame_.w = frame_.h = init_matrix_size;
     }

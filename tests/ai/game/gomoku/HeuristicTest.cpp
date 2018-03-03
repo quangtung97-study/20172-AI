@@ -9,7 +9,7 @@ const auto X = Cell::AI;
 const auto N = Cell::NONE;
 const auto O = Cell::HUMAN;
 
-TEST(Heuristic, analyze_line) {
+TEST(Heuristic, get_segment_bitset) {
     ASSERT_EQ(sizeof(Cell), 1);
 
     auto cells = get_segment_bitset({{X}, 0, 1}, X);
@@ -82,8 +82,6 @@ TEST(Heuristic, get_segment_infos_distances) {
     ASSERT_EQ(ai_segments[1].distances[0], SegmentInfo::Infinity);
     ASSERT_EQ(ai_segments[1].distances[1], SegmentInfo::One);
 }
-
-Cell inverse_of(Cell cell);
 
 TEST(Heuristic, cell_inverse_of) {
     ASSERT_EQ(inverse_of(Cell::AI), Cell::HUMAN);
@@ -177,6 +175,16 @@ TEST(Heuristic, segment_scoring_one) {
     segment.distances[0] = SegmentInfo::One;
     segment.distances[1] = SegmentInfo::One;
     ASSERT_DOUBLE_EQ(score_of(segment), 0.5);
+}
+
+TEST(Heuristic, score_of_line) {
+    Line line{X, X, X, X, X};
+    line.clear();
+    line.push_back(X);
+    line.push_back(X);
+    line.push_back(X);
+    ASSERT_EQ(line[3], X);
+    ASSERT_DOUBLE_EQ(score_of_line(line, X), 20);
 }
 
 } // namespace gomoku

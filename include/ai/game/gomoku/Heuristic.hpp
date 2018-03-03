@@ -47,6 +47,8 @@ SegmentInfoList get_segment_infos(const Line& line, Cell compared_value);
 
 float score_of(SegmentInfo segment);
 
+float score_of_line(Line line, Cell player);
+
 } // namespace gomoku
 } // namespace game
 } // namespace ai

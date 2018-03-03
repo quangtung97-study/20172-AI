@@ -7,11 +7,7 @@ namespace game {
 namespace gomoku {
 
 Cell inverse_of(Cell cell) {
-    if (cell == Cell::AI)
-        return Cell::HUMAN;
-    if (cell == Cell::HUMAN)
-        return Cell::AI;
-    return Cell::NONE;
+    return (Cell)(-(char)cell);
 }
 
 LineView maximum_view(LineView line_view, size_t size) {
@@ -34,7 +30,7 @@ LineView maximum_view(LineView line_view, size_t size) {
 
 std::bitset<MAX_BIT_COUNT> get_segment_bitset(LineView line_view, Cell compared_value)
 {
-    std::bitset<MAX_BIT_COUNT> cells;
+    std::bitset<MAX_BIT_COUNT> cells = 0;
     if (line_view.end() - line_view.begin() > MAX_BIT_COUNT) {
         line_view = maximum_view(line_view, MAX_BIT_COUNT);
     }
@@ -178,6 +174,14 @@ float unscaling_score_of(std::bitset<MAX_BIT_COUNT> cells) {
 float score_of(SegmentInfo segment) {
     return unscaling_score_of(segment.cells) 
         * scaling_factor_of(segment.distances[0], segment.distances[1]);
+}
+
+float score_of_line(Line line, Cell player) {
+    float result = 0.0f;
+    auto infos = get_segment_infos(line, player);
+    for (auto info: infos)
+        result += score_of(info);
+    return result;
 }
 
 } // namespace gomoku

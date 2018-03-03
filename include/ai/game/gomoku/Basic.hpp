@@ -13,6 +13,8 @@ enum class Cell: char {
     HUMAN = -1
 };
 
+Cell inverse_of(Cell cell);
+
 using Line = std::vector<Cell>;
 
 } // namespace gomoku

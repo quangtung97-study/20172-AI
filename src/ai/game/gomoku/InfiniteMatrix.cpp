@@ -8,7 +8,7 @@ int index_of(int x, int y, Frame frame) {
     return x - frame.x + (y - frame.y) * frame.w;
 }
 
-int fall_inside(int x, int y, Frame frame) {
+bool fall_inside(int x, int y, Frame frame) {
     int dx = x - frame.x;
     int dy = y - frame.y;
     return (0 <= dx && dx < frame.w) && (0 <= dy && dy < frame.h);
