@@ -33,7 +33,7 @@ int main() {
             int x, y;
             std::cin >> x;
             std::cin >> y;
-            auto actions = state.legalActions();
+            auto actions = state.legal_actions();
             auto it = std::find_if(actions.begin(), actions.end(),
                     [x, y](auto action) { return action.x == x && action.y == y; });
             if (it == actions.end()) {

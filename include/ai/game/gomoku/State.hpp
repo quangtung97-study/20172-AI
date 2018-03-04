@@ -4,6 +4,8 @@
 #include <vector>
 #include <memory>
 #include <stack>
+#include <array>
+#include <unordered_map>
 #include "Basic.hpp"
 #include "InfiniteMatrix.hpp"
 
@@ -14,6 +16,8 @@ namespace gomoku {
 struct Action {
     int x, y;
 };
+
+bool operator == (Action action1, Action action2);
 
 static const int allow_distance = 1;
 
@@ -29,7 +33,7 @@ private:
 public:
     State(Cell start_player = Cell::HUMAN);
 
-    std::vector<Action> legalActions() const;
+    std::vector<Action> legal_actions() const;
 
     Cell operator() (int x, int y) const;
 

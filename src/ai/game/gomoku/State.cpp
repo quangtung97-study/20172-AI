@@ -9,13 +9,17 @@ namespace ai {
 namespace game {
 namespace gomoku {
 
+bool operator == (Action action1, Action action2) {
+    return action1.x == action2.x && action1.y == action2.y;
+}
+
 State::State(Cell start_player): current_player_{start_player} {
     allow_cells_(0, 0) = 1;
     terminated_stack_.push(false);
     hvalue_stack_.push(0.0f);
 }
 
-std::vector<Action> State::legalActions() const {
+std::vector<Action> State::legal_actions() const {
     std::vector<Action> actions;
     actions.reserve(100);
     auto inused = allow_cells_.inused();
@@ -149,7 +153,7 @@ float alphabeta(State& state, unsigned int depth, float alpha, float beta) {
     if (depth == 0 || state.is_terminal())
         return state.hvalue();
     if (state.is_maximizing()) {
-        for (auto action: state.legalActions()) {
+        for (auto action: state.legal_actions()) {
             state.move(action);
             auto move_guard = gsl::finally([&state]() { state.unmove(); });
 
@@ -162,7 +166,7 @@ float alphabeta(State& state, unsigned int depth, float alpha, float beta) {
         return alpha;
     }
     else {
-        for (auto action: state.legalActions()) {
+        for (auto action: state.legal_actions()) {
             state.move(action);
             auto move_guard = gsl::finally([&state]() { state.unmove(); });
 
@@ -181,11 +185,11 @@ const unsigned int alphabeta_depth = 3;
 Action AI_next_move(State& state) {
     assert (state.current_player() == Cell::AI);
 
-    auto actions = state.legalActions();
+    auto actions = state.legal_actions();
     Action result = actions[0];
     const auto infinity = std::numeric_limits<float>::infinity();
     float prev_hvalue = -infinity;
-    for (auto action: state.legalActions()) {
+    for (auto action: state.legal_actions()) {
         state.move(action);
         auto move_guard = gsl::finally([&state]() { state.unmove(); });
         float new_hvalue = alphabeta(state, alphabeta_depth, -infinity, infinity);

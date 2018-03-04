@@ -7,12 +7,12 @@ namespace ai {
 namespace game {
 namespace gomoku {
 
-void assert_action_eq(Action value, Action compared) {
+static void assert_action_eq(Action value, Action compared) {
     ASSERT_EQ(value.x, compared.x);
     ASSERT_EQ(value.y, compared.y);
 }
 
-void assert_contains(const std::vector<Action>& actions, Action compared) {
+static void assert_contains(const std::vector<Action>& actions, Action compared) {
     auto it = std::find_if(actions.begin(), actions.end(), 
             [compared](auto action) {
                 return action.x == compared.x && action.y == compared.y;
@@ -20,7 +20,7 @@ void assert_contains(const std::vector<Action>& actions, Action compared) {
     ASSERT_TRUE(it != actions.end());
 }
 
-void assert_not_contains(const std::vector<Action>& actions, Action compared) {
+static void assert_not_contains(const std::vector<Action>& actions, Action compared) {
     auto it = std::find_if(actions.begin(), actions.end(), 
             [compared](auto action) {
                 return action.x == compared.x && action.y == compared.y;
@@ -45,22 +45,22 @@ TEST(State, accessor) {
     ASSERT_EQ(state(-1, 0), Cell::AI);
 }
 
-TEST(State, legalActions) {
+TEST(State, legal_actions) {
     State state;
 
-    auto actions = state.legalActions();
+    auto actions = state.legal_actions();
     ASSERT_EQ(actions.size(), 1);
     assert_action_eq(actions[0], {0, 0});
 
     state.move({0, 0});
-    actions = state.legalActions();
+    actions = state.legal_actions();
     ASSERT_EQ(actions.size(), 3 * 3 - 1);
     assert_contains(actions, {-1, 1});
     assert_contains(actions, {1, 1});
     assert_not_contains(actions, {0, 0});
 
     state.move({1, 0});
-    actions = state.legalActions();
+    actions = state.legal_actions();
     ASSERT_EQ(actions.size(), 4 * 3 - 2);
     assert_not_contains(actions, {0, 0});
     assert_not_contains(actions, {1, 0});
@@ -70,11 +70,11 @@ TEST(State, legalActions) {
 TEST(State, unmove) {
     State state;
     state.move({0, 0});
-    auto actions = state.legalActions();
+    auto actions = state.legal_actions();
     ASSERT_EQ(actions.size(), 3 * 3 - 1);
 
     state.unmove();
-    actions = state.legalActions();
+    actions = state.legal_actions();
     ASSERT_EQ(actions.size(), 1);
 }
 
@@ -273,7 +273,6 @@ TEST(State, maximizing) {
     state.move({0, 0});
     ASSERT_FALSE(state.is_maximizing());
 }
-
 
 } // namespace gomoku
 } // namespace game
