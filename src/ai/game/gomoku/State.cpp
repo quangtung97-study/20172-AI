@@ -28,22 +28,51 @@ Cell State::operator() (int x, int y) const {
 
 static const int allow_distance = 2;
 
+float get_sum_lines_hvalue_at(
+        const InfiniteMatrix<Cell>& cells, 
+        Action action, Cell current_player);
+
+bool terminated_check(float new_ai_hvalue, float new_human_hvalue) {
+    const auto infinity = std::numeric_limits<float>::infinity();
+    return new_ai_hvalue == infinity || new_human_hvalue == infinity;
+}
+
 void State::move(Action action) {
+    float old_ai_hvalue = get_sum_lines_hvalue_at(cells_, action, Cell::AI);
+    float old_human_hvalue = get_sum_lines_hvalue_at(cells_, action, Cell::HUMAN);
+
     cells_(action.x, action.y) = current_player_;
     current_player_ = inverse_of(current_player_);
 
     for (int dx = -allow_distance; dx <= allow_distance; dx++)
         for (int dy = -allow_distance; dy <= allow_distance; dy++)
             allow_cells_(action.x + dx, action.y + dy)++;
+
+    float new_ai_hvalue = get_sum_lines_hvalue_at(cells_, action, Cell::AI);
+    float new_human_hvalue = get_sum_lines_hvalue_at(cells_, action, Cell::HUMAN);
+
+    terminated_ = terminated_check(new_ai_hvalue, new_human_hvalue);
+
+    hvalue_ += (new_ai_hvalue - old_ai_hvalue) - (new_human_hvalue - old_human_hvalue);
 }
 
 void State::unmove(Action action) {
+    float old_ai_hvalue = get_sum_lines_hvalue_at(cells_, action, Cell::AI);
+    float old_human_hvalue = get_sum_lines_hvalue_at(cells_, action, Cell::HUMAN);
+
     cells_(action.x, action.y) = Cell::NONE;
     current_player_ = inverse_of(current_player_);
 
     for (int dx = -allow_distance; dx <= allow_distance; dx++)
         for (int dy = -allow_distance; dy <= allow_distance; dy++)
             allow_cells_(action.x + dx, action.y + dy)--;
+
+    float new_ai_hvalue = get_sum_lines_hvalue_at(cells_, action, Cell::AI);
+    float new_human_hvalue = get_sum_lines_hvalue_at(cells_, action, Cell::HUMAN);
+
+    terminated_ = terminated_check(new_ai_hvalue, new_human_hvalue);
+
+    hvalue_ += (new_ai_hvalue - old_ai_hvalue) - (new_human_hvalue - old_human_hvalue);
 }
 
 void get_vertical_line(Line& line, const InfiniteMatrix<Cell>& cells, Action action) {

@@ -206,9 +206,49 @@ TEST(State, get_sum_lines_hvalue_at_second_diagonal) {
     ASSERT_DOUBLE_EQ(dh, compared);
 }
 
-TEST(State, all_zero) {
-    InfiniteMatrix<Cell> cells;
+TEST(State, hvalue) {
+    State state;
+    state.move({0, 0});
+    ASSERT_DOUBLE_EQ(state.hvalue(), -4);
+    state.move({1, 0});
+    ASSERT_DOUBLE_EQ(state.hvalue(), 0);
+    state.unmove({1, 0});
+    ASSERT_DOUBLE_EQ(state.hvalue(), -4);
 }
+
+bool terminated_check(float new_ai_hvalue, float new_human_hvalue);
+
+TEST(State, terminated_check) {
+    const auto infinity = std::numeric_limits<float>::infinity();
+    ASSERT_TRUE(terminated_check(infinity, 10));
+    ASSERT_TRUE(terminated_check(100, infinity));
+    ASSERT_FALSE(terminated_check(10, 10));
+}
+
+TEST(State, is_terminal) {
+    State state; // HUMAN
+    state.move({0, 0}); // AI
+    state.move({0, 1}); // HUMAN
+    state.move({1, 0}); // AI
+    state.move({1, 1}); // HUMAN
+    state.move({2, 0}); // AI
+    state.move({2, 1}); // HUMAN
+    state.move({3, 0}); // AI
+    ASSERT_FALSE(state.is_terminal());
+    state.move({3, 1}); // HUMAN
+    ASSERT_FALSE(state.is_terminal());
+    state.move({4, 0}); // AI
+    ASSERT_TRUE(state.is_terminal());
+    state.unmove({4, 0}); // HUMAN
+    ASSERT_FALSE(state.is_terminal());
+    state.move({3, -1}); // AI
+    ASSERT_EQ(state.current_player(), Cell::AI);
+    ASSERT_FALSE(state.is_terminal());
+    state.move({4, 1}); // HUMAN
+    ASSERT_TRUE(state.is_terminal());
+    ASSERT_EQ(state.current_player(), Cell::HUMAN);
+}
+
 
 } // namespace gomoku
 } // namespace game
