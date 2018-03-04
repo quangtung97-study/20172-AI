@@ -90,7 +90,7 @@ SegmentInfoList get_segment_infos(const Line& line, Cell compared_value) {
                 [compared_value](Cell cell) { 
                     return cell == inverse_of(compared_value); 
         });
-        auto segment_end = reverse_search(it, line.begin(), compared_value);
+        auto segment_end = reverse_search(it, segment_begin, compared_value);
 
         SegmentInfo info;
         info.cells = get_segment_bitset(LineView{segment_begin, segment_end}, compared_value);
@@ -132,30 +132,30 @@ float unscaling_score_of(std::bitset<MAX_BIT_COUNT> cells) {
         case 0b1:
             return 1;
         case 0b11:
-            return 5;
+            return 2.1;
         case 0b101:
-            return 5;
+            return 2.1;
         case 0b1001:
-            return 2.5;
+            return 1.5;
 
         case 0b111:
-            return 20;
+            return 4.3;
         case 0b1101:
         case 0b1011:
-            return 20;
+            return 4.3;
         case 0b11001:
         case 0b10011:
-            return 10;
+            return 8.7;
         case 0b10101:
-            return 5;
+            return 3.9;
 
         case 0b1111:
-            return 100;
+            return 17.5;
         case 0b11101:
         case 0b10111:
-            return 40;
+            return 17;
         case 0b11011:
-            return 40;
+            return 17;
 
         case 0b11111:
             return std::numeric_limits<float>::infinity();

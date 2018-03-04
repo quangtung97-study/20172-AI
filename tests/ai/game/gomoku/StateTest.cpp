@@ -39,7 +39,7 @@ TEST(State, accessor) {
     ASSERT_EQ(state(0, 0), Cell::HUMAN);
     state.move({1, 0});
     ASSERT_EQ(state(1, 0), Cell::AI);
-    state.unmove({1, 0});
+    state.unmove();
     ASSERT_EQ(state(1, 0), Cell::NONE);
     state.move({-1, 0});
     ASSERT_EQ(state(-1, 0), Cell::AI);
@@ -54,32 +54,33 @@ TEST(State, legalActions) {
 
     state.move({0, 0});
     actions = state.legalActions();
-    ASSERT_EQ(actions.size(), 5 * 5 - 1);
-    assert_contains(actions, {-2, 2});
-    assert_contains(actions, {2, 2});
+    ASSERT_EQ(actions.size(), 3 * 3 - 1);
+    assert_contains(actions, {-1, 1});
+    assert_contains(actions, {1, 1});
     assert_not_contains(actions, {0, 0});
 
     state.move({1, 0});
     actions = state.legalActions();
-    ASSERT_EQ(actions.size(), 6 * 5 - 2);
+    ASSERT_EQ(actions.size(), 4 * 3 - 2);
     assert_not_contains(actions, {0, 0});
     assert_not_contains(actions, {1, 0});
-    assert_contains(actions, {3, -2});
+    assert_contains(actions, {2, -1});
 }
 
 TEST(State, unmove) {
     State state;
     state.move({0, 0});
     auto actions = state.legalActions();
-    ASSERT_EQ(actions.size(), 5 * 5 - 1);
+    ASSERT_EQ(actions.size(), 3 * 3 - 1);
 
-    state.unmove({0, 0});
+    state.unmove();
     actions = state.legalActions();
     ASSERT_EQ(actions.size(), 1);
 }
 
 const auto X = Cell::AI;
 const auto N = Cell::NONE;
+const auto O = Cell::HUMAN;
 
 void assert_line_eq(const Line& a, const Line& b) {
     ASSERT_TRUE(std::equal(a.begin(), a.end(), b.begin(), b.end()));
@@ -212,8 +213,25 @@ TEST(State, hvalue) {
     ASSERT_DOUBLE_EQ(state.hvalue(), -4);
     state.move({1, 0});
     ASSERT_DOUBLE_EQ(state.hvalue(), 0);
-    state.unmove({1, 0});
+    state.unmove();
     ASSERT_DOUBLE_EQ(state.hvalue(), -4);
+}
+
+TEST(State, hvalue2) {
+    InfiniteMatrix<Cell> cells;
+    ASSERT_DOUBLE_EQ(get_sum_lines_hvalue_at(cells, {0, 0}, X), 0.0f);
+    ASSERT_DOUBLE_EQ(get_sum_lines_hvalue_at(cells, {0, 0}, O), 0.0f);
+    cells(0, 0) = O;
+    ASSERT_DOUBLE_EQ(get_sum_lines_hvalue_at(cells, {0, 0}, X), 0.0f);
+    ASSERT_DOUBLE_EQ(get_sum_lines_hvalue_at(cells, {0, 0}, O), 4.0f);
+    cells(-1, -1) = X;
+    ASSERT_DOUBLE_EQ(get_sum_lines_hvalue_at(cells, {-1, -1}, X), 3.5f);
+    ASSERT_DOUBLE_EQ(get_sum_lines_hvalue_at(cells, {-1, -1}, O), 0.5f);
+    State state;
+    state.move({0, 0});
+    ASSERT_DOUBLE_EQ(state.hvalue(), -4);
+    state.move({-1, 1});
+    ASSERT_DOUBLE_EQ(state.hvalue(), 0);
 }
 
 bool terminated_check(float new_ai_hvalue, float new_human_hvalue);
@@ -239,7 +257,7 @@ TEST(State, is_terminal) {
     ASSERT_FALSE(state.is_terminal());
     state.move({4, 0}); // AI
     ASSERT_TRUE(state.is_terminal());
-    state.unmove({4, 0}); // HUMAN
+    state.unmove(); // HUMAN
     ASSERT_FALSE(state.is_terminal());
     state.move({3, -1}); // AI
     ASSERT_EQ(state.current_player(), Cell::AI);
@@ -247,6 +265,13 @@ TEST(State, is_terminal) {
     state.move({4, 1}); // HUMAN
     ASSERT_TRUE(state.is_terminal());
     ASSERT_EQ(state.current_player(), Cell::HUMAN);
+}
+
+TEST(State, maximizing) {
+    State state(Cell::AI);
+    ASSERT_TRUE(state.is_maximizing());
+    state.move({0, 0});
+    ASSERT_FALSE(state.is_maximizing());
 }
 
 

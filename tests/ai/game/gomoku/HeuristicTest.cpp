@@ -117,8 +117,7 @@ TEST(Heuristic, right_distance_of) {
     ASSERT_EQ(right_distance_of(line3.begin() + 1, line3.end()), SegmentInfo::Infinity);
     Line line4{X, N, N};
     ASSERT_EQ(right_distance_of(line4.begin() + 1, line4.end()), SegmentInfo::Infinity);
-    Line line5{X};
-    ASSERT_EQ(right_distance_of(line5.begin() + 1, line5.end()), SegmentInfo::Infinity);
+    Line line5{X}; ASSERT_EQ(right_distance_of(line5.begin() + 1, line5.end()), SegmentInfo::Infinity);
     Line line6{X, N};
     ASSERT_EQ(right_distance_of(line6.begin() + 1, line6.end()), SegmentInfo::Infinity);
 }
@@ -175,19 +174,6 @@ TEST(Heuristic, segment_scoring_one) {
     segment.distances[0] = SegmentInfo::One;
     segment.distances[1] = SegmentInfo::One;
     ASSERT_DOUBLE_EQ(score_of(segment), 0.5);
-}
-
-TEST(Heuristic, score_of_line) {
-    Line line{X, X, X, X, X};
-    line.clear();
-    line.push_back(X);
-    line.push_back(X);
-    line.push_back(X);
-    ASSERT_EQ(line[3], X);
-    ASSERT_DOUBLE_EQ(score_of_line(line, X), 20);
-
-    Line line2{N, X, N};
-    ASSERT_DOUBLE_EQ(score_of_line(line2, X), 1);
 }
 
 } // namespace gomoku

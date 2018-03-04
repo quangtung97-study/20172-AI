@@ -4,7 +4,7 @@ project(AI)
 
 set(CMAKE_CXX_STANDARD 14)
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 include_directories(./include)
 
@@ -16,6 +16,14 @@ add_executable(play_tictactoe
 
 target_link_libraries(play_tictactoe 
     src
+)
+
+add_executable(play_gomoku
+    src/ai/game/gomoku/main.cpp
+)
+
+target_link_libraries(play_gomoku
+    ai-game-gomoku
 )
 
 enable_testing()
