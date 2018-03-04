@@ -110,29 +110,29 @@ SegmentInfo::Distance right_distance_of(Line::const_iterator it, Line::const_ite
 
 TEST(Heuristic, right_distance_of) {
     Line line1{X, O};
-    ASSERT_EQ(right_distance_of(line1.begin(), line1.end()), SegmentInfo::Zero);
+    ASSERT_EQ(right_distance_of(line1.begin() + 1, line1.end()), SegmentInfo::Zero);
     Line line2{X, N, O};
-    ASSERT_EQ(right_distance_of(line2.begin(), line2.end()), SegmentInfo::One);
+    ASSERT_EQ(right_distance_of(line2.begin() + 1, line2.end()), SegmentInfo::One);
     Line line3{X, N, N, O};
-    ASSERT_EQ(right_distance_of(line3.begin(), line3.end()), SegmentInfo::Infinity);
+    ASSERT_EQ(right_distance_of(line3.begin() + 1, line3.end()), SegmentInfo::Infinity);
     Line line4{X, N, N};
-    ASSERT_EQ(right_distance_of(line4.begin(), line4.end()), SegmentInfo::Infinity);
+    ASSERT_EQ(right_distance_of(line4.begin() + 1, line4.end()), SegmentInfo::Infinity);
     Line line5{X};
-    ASSERT_EQ(right_distance_of(line5.begin(), line5.end()), SegmentInfo::Infinity);
+    ASSERT_EQ(right_distance_of(line5.begin() + 1, line5.end()), SegmentInfo::Infinity);
     Line line6{X, N};
-    ASSERT_EQ(right_distance_of(line6.begin(), line6.end()), SegmentInfo::Infinity);
+    ASSERT_EQ(right_distance_of(line6.begin() + 1, line6.end()), SegmentInfo::Infinity);
 }
 
 Line::const_iterator reverse_search(Line::const_iterator it, Line::const_iterator begin, Cell value);
 
 TEST(Heuristic, reverse_search) {
     Line line1{X, X, N, O};
-    auto it = reverse_search(line1.begin() + 3, line1.begin(), X);
-    ASSERT_EQ(it, line1.begin() + 1);
+    auto it = reverse_search(line1.end(), line1.begin(), X);
+    ASSERT_EQ(it, std::next(line1.begin(), 2));
 
     Line line2{X, X, N, N, N, O};
-    it = reverse_search(line1.begin() + 5, line1.begin(), X);
-    ASSERT_EQ(it, line1.begin() + 1);
+    it = reverse_search(line1.end(), line1.begin(), X);
+    ASSERT_EQ(it, std::next(line1.begin(), 2));
 }
 
 int index_in_weight_table_of(SegmentInfo segment);
