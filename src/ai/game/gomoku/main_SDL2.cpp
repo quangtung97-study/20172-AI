@@ -9,6 +9,7 @@
 #include <mutex>
 #include <atomic>
 #include <cassert>
+#include <cmath>
 
 namespace ai {
 namespace game {
