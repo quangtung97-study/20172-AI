@@ -2,6 +2,7 @@
 #include <numeric>
 #include <limits>
 #include <algorithm>
+#include <cassert>
 
 namespace ai {
 namespace game {
@@ -123,6 +124,7 @@ float scaling_factor_of(SegmentInfo::Distance d1, SegmentInfo::Distance d2) {
         case One + One * 3:
             return 0.5;
         default:
+            assert (false);
             return 0;
     }
 }
@@ -165,9 +167,19 @@ float unscaling_score_of(std::bitset<MAX_BIT_COUNT> cells) {
     }
 }
 
+// allow block head and tail
 float score_of(SegmentInfo segment) {
-    return unscaling_score_of(segment.cells) 
-        * scaling_factor_of(segment.distances[0], segment.distances[1]);
+    const auto infinity = std::numeric_limits<float>::infinity();
+    auto unscaling_score = unscaling_score_of(segment.cells);
+    auto factor = scaling_factor_of(
+            segment.distances[0], segment.distances[1]);
+    if (unscaling_score == infinity) {
+        if (factor == 0)
+            return 0;
+        else 
+            return infinity;
+    }
+    return unscaling_score * factor;
 }
 
 float score_of_line(Line line, Cell player) {
