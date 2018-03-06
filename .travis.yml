@@ -10,6 +10,7 @@ addons:
             - g++-5
             - libsdl2-dev
             - libsdl2-image-dev
+            - libsdl2-ttf-dev
 
 script:
     - CXX=/usr/bin/g++-5

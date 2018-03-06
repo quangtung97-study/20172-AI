@@ -5,6 +5,7 @@ add_executable(test_ai_game_gomoku
     InfiniteMatrixTest.cpp
     StateTest.cpp
     MoveOrdererTest.cpp
+    GUITest.cpp
 )
 
 target_link_libraries(test_ai_game_gomoku

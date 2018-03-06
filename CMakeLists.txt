@@ -34,6 +34,8 @@ target_link_libraries(gomoku_gui
     ai-game-gomoku
     SDL2 
     SDL2_image
+    SDL2_ttf
+    pthread
 )
 
 enable_testing()
