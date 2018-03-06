@@ -1,6 +1,7 @@
 #include <gmock/gmock.h>
 #include <ai/game/gomoku/State.hpp>
 #include <algorithm>
+#include <cmath>
 
 namespace ai {
 namespace game {
