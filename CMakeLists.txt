@@ -27,16 +27,13 @@ target_link_libraries(play_gomoku
 )
 
 add_executable(gomoku_gui
-    src/ai/game/gomoku/main_SDL2.cpp
+    src/ai/game/gomoku/main_SDLWrapper.cpp
 )
 
-target_link_libraries(gomoku_gui 
-    ai-game-gomoku
-    SDL2 
-    SDL2_image
-    SDL2_ttf
-    pthread
+target_link_libraries(gomoku_gui
+    ai-game-gomoku-gui
 )
+
 
 enable_testing()
 add_subdirectory(tests)

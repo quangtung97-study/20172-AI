@@ -5,7 +5,6 @@ add_executable(test_ai_game_gomoku
     InfiniteMatrixTest.cpp
     StateTest.cpp
     MoveOrdererTest.cpp
-    GUITest.cpp
 )
 
 target_link_libraries(test_ai_game_gomoku
@@ -14,4 +13,16 @@ target_link_libraries(test_ai_game_gomoku
     pthread
 )
 
+add_executable(test_ai_game_gomoku_gui
+    GUITest.cpp
+    AIMoverTest.cpp
+)
+
+target_link_libraries(test_ai_game_gomoku_gui
+    ai-game-gomoku-gui
+    gmock_main
+    pthread
+)
+
 ADD_TEST(NAME AIGameGomoku COMMAND test_ai_game_gomoku)
+ADD_TEST(NAME AIGameGomokuGUI COMMAND test_ai_game_gomoku_gui)

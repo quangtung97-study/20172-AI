@@ -23,6 +23,7 @@ namespace gomoku {
 static SDL_Texture *matrix[MATRIX_SIZE][MATRIX_SIZE];
 static SDL_Texture *N, *O, *X;
 static SDL_Renderer *renderer;
+
 typedef Action Position;
 
 struct Coord {
