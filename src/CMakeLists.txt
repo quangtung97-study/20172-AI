@@ -5,3 +5,4 @@ add_library(src
 )
 
 add_subdirectory(ai/game/gomoku)
+add_subdirectory(ai/solving)
