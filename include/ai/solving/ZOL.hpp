@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <vector>
 
 namespace ai {
 namespace solving {
@@ -94,9 +95,36 @@ Formula Not(const Formula& a);
 
 void replace_imply_equiv(Formula& f);
 
-void push_down_or(Formula& f);
+void push_down_not(Formula& f);
 
 void CNF(Formula& f);
+
+struct DisjunctForm {
+    class InitError: public std::exception {
+    public:
+        const char *what() const noexcept override {
+            return "can't init disjunction form";
+        }
+    };
+    struct Element {
+        Variable v;
+        bool neg = false;
+
+        bool operator == (const Element& other) const {
+            return v == other.v && neg == other.neg;
+        }
+    };
+
+    std::vector<Element> elements;
+
+    DisjunctForm(std::initializer_list<Formula> forms);
+
+    bool operator == (const DisjunctForm& other) const;
+
+    bool operator != (const DisjunctForm& other) const;
+};
+
+std::vector<DisjunctForm> to_disjunction_list(const Formula& cnf);
 
 } // namespace solving
 } // namespace ai

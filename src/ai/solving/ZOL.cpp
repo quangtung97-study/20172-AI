@@ -1,5 +1,6 @@
 #include <ai/solving/ZOL.hpp>
 #include <iostream>
+#include <algorithm>
 
 namespace ai {
 namespace solving {
@@ -46,12 +47,12 @@ struct AtomicNode final: public Node {
 };
 
 struct NotNode final: public Node {
-    Formula form_;
+    Formula child_;
 
-    NotNode(const Formula& form): form_{form} {}
+    NotNode(const Formula& f): child_{f} {}
 
     bool evaluate(const ZOLMap& map) const override {
-        return !form_.evaluate(map);
+        return !child_.evaluate(map);
     }
 
     const std::type_info& type_info() const override {
@@ -59,40 +60,49 @@ struct NotNode final: public Node {
     }
 
     std::unique_ptr<Node> clone() const override { 
-        return std::make_unique<NotNode>(form_);
+        return std::make_unique<NotNode>(child_);
     }
 
     bool operator == (const Node& other) override {
         if (other.type_info() != typeid(*this)) 
             return false;
-        return form_ == static_cast<const NotNode&>(other).form_;
+        return child_ == static_cast<const NotNode&>(other).child_;
     }
 };
 
 struct BinaryNode: public Node {
-    Formula forms_[2];
+    Formula left_, right_;
 
     virtual bool binary_connective(bool a, bool b) const = 0;
 
     BinaryNode(const Formula& a, const Formula& b)
-        : forms_{a, b} {}
+        : left_{a}, right_{b} {}
 
     BinaryNode(Formula&& a, Formula&& b)
-        : forms_{std::move(a), std::move(b)} {}
+        : left_{std::move(a)}, right_{std::move(b)} {}
 
     bool evaluate(const ZOLMap& map) const override {
-        bool a = forms_[0].evaluate(map);
-        bool b = forms_[1].evaluate(map);
+        bool a = left_.evaluate(map);
+        bool b = right_.evaluate(map);
         return binary_connective(a, b);
     }
 
-    bool operator == (const Node& other) override {
-        if (other.type_info() != typeid(*this)) 
-            return false;
-        return forms_[0] == static_cast<const BinaryNode&>(other).forms_[0]
-            && forms_[1] == static_cast<const BinaryNode&>(other).forms_[1];
-    }
+    bool operator == (const Node& other) override;
 };
+
+const Formula& left_formula(const Node& other) {
+    return static_cast<const BinaryNode&>(other).left_;
+}
+
+const Formula& right_formula(const Node& other) {
+    return static_cast<const BinaryNode&>(other).right_;
+}
+
+bool BinaryNode::operator == (const Node& other) {
+    if (other.type_info() != typeid(*this)) 
+        return false;
+    return left_ == left_formula(other) && right_ == right_formula(other);
+}
 
 struct AndNode final: public BinaryNode {
     bool binary_connective(bool a, bool b) const override {
@@ -106,7 +116,14 @@ struct AndNode final: public BinaryNode {
     }
 
     std::unique_ptr<Node> clone() const override { 
-        return std::make_unique<AndNode>(forms_[0], forms_[1]);
+        return std::make_unique<AndNode>(left_, right_);
+    }
+
+    bool operator == (const Node& other) override {
+        if (other.type_info() != typeid(*this)) 
+            return false;
+        return (left_ == left_formula(other) && right_ == right_formula(other))
+            || (right_ == left_formula(other) && left_ == right_formula(other));
     }
 };
 
@@ -122,7 +139,14 @@ struct OrNode final: public BinaryNode {
     }
 
     std::unique_ptr<Node> clone() const override { 
-        return std::make_unique<OrNode>(forms_[0], forms_[1]);
+        return std::make_unique<OrNode>(left_, right_);
+    }
+
+    bool operator == (const Node& other) override {
+        if (other.type_info() != typeid(*this)) 
+            return false;
+        return (left_ == left_formula(other) && right_ == right_formula(other))
+            || (right_ == left_formula(other) && left_ == right_formula(other));
     }
 };
 
@@ -138,7 +162,7 @@ struct ImplyNode final: public BinaryNode {
     }
 
     std::unique_ptr<Node> clone() const override { 
-        return std::make_unique<ImplyNode>(forms_[0], forms_[1]);
+        return std::make_unique<ImplyNode>(left_, right_);
     }
 };
 
@@ -154,12 +178,13 @@ struct EquivNode final: public BinaryNode {
     }
 
     std::unique_ptr<Node> clone() const override { 
-        return std::make_unique<EquivNode>(forms_[0], forms_[1]);
+        return std::make_unique<EquivNode>(left_, right_);
     }
 };
 
 } // namespace detail
 
+const std::type_info& ATOMIC_NODE = typeid(detail::AtomicNode);
 const std::type_info& OR_NODE = typeid(detail::OrNode);
 const std::type_info& AND_NODE = typeid(detail::AndNode);
 const std::type_info& NOT_NODE = typeid(detail::NotNode);
@@ -244,70 +269,155 @@ Formula Not(const Formula& a) {
     return f;
 }
 
+// Helper Functions
+static Formula& child_formula(Formula& form) {
+    auto& node = static_cast<detail::NotNode&>(*form.data());
+    return node.child_;
+}
+
+static const Formula& child_formula(const Formula& form) {
+    auto& node = static_cast<const detail::NotNode&>(*form.data());
+    return node.child_;
+}
+
+static Formula& left_formula(Formula& form) {
+    auto& node = static_cast<detail::BinaryNode&>(*form.data());
+    return node.left_;
+}
+
+static Formula& right_formula(Formula& form) {
+    auto& node = static_cast<detail::BinaryNode&>(*form.data());
+    return node.right_;
+}
+
+
 void replace_imply_equiv(Formula& f) {
     if (f.data_type_info() == IMPLY_NODE) {
-        auto old = std::move(f.data());
-        auto& old_node = static_cast<detail::ImplyNode&>(*old);
-
-        auto& a = old_node.forms_[0];
-        auto& b = old_node.forms_[1];
+        auto& a = left_formula(f);
+        auto& b = right_formula(f);
 
         replace_imply_equiv(a);
         replace_imply_equiv(b);
 
-        f.data() = std::make_unique<detail::OrNode>(Not(a), b);
+        f = Or(Not(a), b);
     }
     else if (f.data_type_info() == EQUIV_NODE) {
-        auto old = std::move(f.data());
-        auto& old_node = static_cast<detail::EquivNode&>(*old);
-
-        auto& a = old_node.forms_[0];
-        auto& b = old_node.forms_[1];
+        auto& a = left_formula(f);
+        auto& b = right_formula(f);
 
         replace_imply_equiv(a);
         replace_imply_equiv(b);
 
-        f.data() = std::make_unique<detail::OrNode>(
-                And(a, b), And(Not(a), Not(b)));
+        f = Or(And(a, b), And(Not(a), Not(b)));
+    }
+}
+
+void push_down_not(Formula& f) {
+    if (f.data_type_info() == AND_NODE || f.data_type_info() == OR_NODE) {
+        auto& a = left_formula(f);
+        auto& b = right_formula(f);
+
+        push_down_not(a);
+        push_down_not(b);
+    }
+    else if (f.data_type_info() == NOT_NODE) {
+        auto& child = child_formula(f);
+        if (child.data_type_info() == AND_NODE) {
+            auto a = Not(left_formula(child));
+            auto b = Not(right_formula(child));
+
+            push_down_not(a);
+            push_down_not(b);
+
+            f = Or(a, b);
+        }
+        else if (child.data_type_info() == OR_NODE) {
+            auto a = Not(left_formula(child));
+            auto b = Not(right_formula(child));
+
+            push_down_not(a);
+            push_down_not(b);
+
+            f = And(a, b);
+        }
+        else if (child.data_type_info() == NOT_NODE) {
+            auto a = child_formula(child);
+            push_down_not(a);
+            f = a;
+        }
     }
 }
 
 void push_down_or(Formula& f) {
-    if (f.data_type_info() == NOT_NODE) {
-        auto& old_node = static_cast<detail::NotNode&>(*f.data());
+    if (f.data_type_info() == AND_NODE) {
+        push_down_or(left_formula(f));
+        push_down_or(right_formula(f));
+    }
+    else if (f.data_type_info() == OR_NODE) {
+        if (left_formula(f).data_type_info() == AND_NODE) {
+            auto& left = left_formula(f);
 
-        if (old_node.form_.data_type_info() == AND_NODE) {
-            auto inside_old = std::move(old_node.form_.data());
-            auto& inside_old_node = static_cast<detail::AndNode&>(*inside_old);
+            auto a = left_formula(left);
+            auto b = right_formula(left);
+            auto c = right_formula(f);
 
-            auto a = Not(inside_old_node.forms_[0]);
-            auto b = Not(inside_old_node.forms_[1]);
-
-            push_down_or(a);
-            push_down_or(b);
-
-            f.data() = std::make_unique<detail::OrNode>(a, b);
-            return;
+            f = And(Or(a, c), Or(b, c));
         }
-        else if (old_node.form_.data_type_info() == OR_NODE) {
-            auto inside_old = std::move(old_node.form_.data());
-            auto& inside_old_node = static_cast<detail::OrNode&>(*inside_old);
 
-            auto a = Not(inside_old_node.forms_[0]);
-            auto b = Not(inside_old_node.forms_[1]);
+        if (right_formula(f).data_type_info() == AND_NODE) {
+            auto& right = right_formula(f);
 
-            push_down_or(a);
-            push_down_or(b);
+            auto a = left_formula(f);
+            auto b = left_formula(right);
+            auto c = right_formula(right);
 
-            f.data() = std::make_unique<detail::AndNode>(a, b);
-            return;
+            f = And(Or(a, b), Or(a, c));
         }
+
+        push_down_or(left_formula(f));
+        push_down_or(right_formula(f));
     }
 }
 
 void CNF(Formula& f) {
     replace_imply_equiv(f);
+    push_down_not(f);
     push_down_or(f);
+}
+
+DisjunctForm::DisjunctForm(std::initializer_list<Formula> forms) {
+    for (auto& f: forms) {
+        if (f.data_type_info() == ATOMIC_NODE) {
+            auto& node = static_cast<const detail::AtomicNode&>(*f.data());
+            elements.push_back({node.var_, false});
+        }
+        else if (f.data_type_info() == NOT_NODE 
+                && child_formula(f).data_type_info() == ATOMIC_NODE) {
+            auto& node = static_cast<const detail::AtomicNode&>(
+                    *child_formula(f).data());
+            elements.push_back({node.var_, true});
+        }
+        else {
+            throw InitError();
+        }
+    }
+}
+
+bool DisjunctForm::operator == (const DisjunctForm& other) const {
+    return std::all_of(elements.begin(), elements.end(), 
+            [&other](auto& f) {
+                auto it = std::find(other.elements.begin(), other.elements.end(), f);
+                return it != other.elements.end();
+            });
+}
+
+bool DisjunctForm::operator != (const DisjunctForm& other) const {
+    return !((*this) == other);
+}
+
+std::vector<DisjunctForm> to_disjunction_list(const Formula& cnf) {
+    std::vector<DisjunctForm> result;
+    return result;
 }
 
 } // namespace solving
