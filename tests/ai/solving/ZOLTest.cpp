@@ -206,10 +206,72 @@ TEST(ZOL, DisjunctForm_equals) {
     ASSERT_TRUE(f != h);
 }
 
+TEST(ZOL, DisjunctForm_init) {
+    VAR(a); VAR(b); VAR(c); VAR(d);
+    DisjunctForm f = {a, b, Not(c)};
+
+    try {
+        DisjunctForm g = {a, And(a, b), d};
+        FAIL() << "Expected InitError";
+    }
+    catch (const DisjunctForm::InitError& e) {
+    }
+    catch (...) {
+        FAIL() << "Expected InitError";
+    }
+}
+
 TEST(ZOL, to_disjunction_list) {
     VAR(a); VAR(b); VAR(c); VAR(d);
     auto f = Or(a, b);
-    std::vector<DisjunctForm> forms = to_disjunction_list(f);
+    auto forms = to_disjunction_list(f);
+    ASSERT_EQ(forms.size(), 1);
+    ASSERT_TRUE(forms[0] == DisjunctForm({a, b}));
+
+    f = And(Or(a, Or(b, c)), Or(Or(a, d), Not(c)));
+    forms = to_disjunction_list(f);
+    ASSERT_EQ(forms.size(), 2);
+    ASSERT_TRUE(forms[0] == DisjunctForm({a, b, c}));
+    ASSERT_TRUE(forms[1] == DisjunctForm({a, d, Not(c)}));
+}
+
+TEST(ZOL, search_for_occurence) {
+    VAR(a); VAR(b); VAR(c); VAR(d); VAR(e);
+    auto f = And(Or(a, Or(b, c)), Or(Or(a, d), Not(c)));
+    CNF(f);
+    auto forms = to_disjunction_list(f);
+
+    auto it = search_for_occurence(forms.begin(), forms.end(), a);
+    ASSERT_EQ(it, forms.begin());
+
+    it = search_for_occurence(forms.begin(), forms.end(), a, true);
+    ASSERT_EQ(it, forms.end());
+
+    it = search_for_occurence(forms.begin(), forms.end(), c, true);
+    ASSERT_EQ(it, forms.begin() + 1);
+}
+
+TEST(ZOL, to_string) {
+    VAR(a); VAR(b); VAR(c); VAR(d);
+    DisjunctForm f = {a, Not(b), c};
+
+    auto s = to_string(f, d);
+    ASSERT_EQ(s, "");
+
+    s = to_string(f, c, false);
+    ASSERT_EQ(s, "~a & b -> c");
+    
+    f = {a, b, Not(c), Not(d)};;
+    s = to_string(f, d, true);
+    ASSERT_EQ(s, "~a & ~b & c -> ~d");
+}
+
+TEST(ZOL, resolution) {
+    VAR(a); VAR(b); VAR(c); VAR(d);
+    DisjunctForm f = {a, Not(b), c};
+    std::vector<DisjunctForm> forms = {f};
+    auto it_list = resolution(forms, {{c, false}});
+    // ASSERT_EQ(it_list[0], forms.begin());
 }
 
 } // namespace solving

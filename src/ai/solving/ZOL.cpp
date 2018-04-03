@@ -1,6 +1,4 @@
 #include <ai/solving/ZOL.hpp>
-#include <iostream>
-#include <algorithm>
 
 namespace ai {
 namespace solving {
@@ -285,8 +283,18 @@ static Formula& left_formula(Formula& form) {
     return node.left_;
 }
 
+static const Formula& left_formula(const Formula& f) {
+    auto& node = static_cast<const detail::BinaryNode&>(*f.data());
+    return node.left_;
+}
+
 static Formula& right_formula(Formula& form) {
     auto& node = static_cast<detail::BinaryNode&>(*form.data());
+    return node.right_;
+}
+
+static const Formula& right_formula(const Formula& form) {
+    auto& node = static_cast<const detail::BinaryNode&>(*form.data());
     return node.right_;
 }
 
@@ -415,8 +423,69 @@ bool DisjunctForm::operator != (const DisjunctForm& other) const {
     return !((*this) == other);
 }
 
+void collect_variables(const Formula& f, DisjunctForm& result) {
+    if (f.data_type_info() == NOT_NODE) {
+        auto& node = static_cast<const detail::NotNode&>(*f.data());
+        auto& child = static_cast<const detail::AtomicNode&>(*node.child_.data());
+        result.elements.push_back({child.var_, true});
+    }
+    else if (f.data_type_info() == ATOMIC_NODE) {
+        auto& node = static_cast<const detail::AtomicNode&>(*f.data());
+        result.elements.push_back({node.var_, false});
+    }
+    else if (f.data_type_info() == OR_NODE) {
+        collect_variables(left_formula(f), result);
+        collect_variables(right_formula(f), result);
+    }
+}
+
+void reach_disjunctions(const Formula& f, std::vector<DisjunctForm>& vec) {
+    if (f.data_type_info() == AND_NODE) {
+        reach_disjunctions(left_formula(f), vec);
+        reach_disjunctions(right_formula(f), vec);
+    }
+    else if (f.data_type_info() == OR_NODE) {
+        DisjunctForm form;
+        collect_variables(f, form);
+        vec.push_back(form);
+    }
+}
+
 std::vector<DisjunctForm> to_disjunction_list(const Formula& cnf) {
     std::vector<DisjunctForm> result;
+    reach_disjunctions(cnf, result);
+    return result;
+}
+
+std::string to_string(const DisjunctForm& form, Variable v, bool neg) {
+    auto find_it = std::find(form.elements.begin(), form.elements.end(), 
+            DisjunctForm::Element{v, neg});
+    if (find_it == form.elements.end())
+        return "";
+
+    std::string result;
+    for (auto it = form.elements.begin(); it != form.elements.end(); ++it) {
+        if (it == find_it)
+            continue;
+
+        if (result.size() >= 1)
+            result += " & ";
+
+        if (!it->neg)
+            result.push_back('~');
+        result += it->v.name();
+    }
+
+    result += " -> ";
+    if (neg)
+        result.push_back('~');
+    result += v.name();
+    return result;
+}
+
+std::vector<std::vector<DisjunctForm>::const_iterator> 
+resolution(const std::vector<DisjunctForm>& forms, const std::vector<NegVar>& list) {
+    std::vector<std::vector<DisjunctForm>::const_iterator> result;
     return result;
 }
 

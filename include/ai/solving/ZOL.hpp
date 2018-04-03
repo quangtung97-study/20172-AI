@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 namespace ai {
 namespace solving {
@@ -117,6 +118,8 @@ struct DisjunctForm {
 
     std::vector<Element> elements;
 
+    DisjunctForm() = default;
+
     DisjunctForm(std::initializer_list<Formula> forms);
 
     bool operator == (const DisjunctForm& other) const;
@@ -125,6 +128,28 @@ struct DisjunctForm {
 };
 
 std::vector<DisjunctForm> to_disjunction_list(const Formula& cnf);
+
+template <typename It>
+auto search_for_occurence(It first, It last, Variable v, bool neg = false) {
+    return std::find_if(first, last, [&v, neg](auto form) {
+                return std::find(form.elements.begin(), form.elements.end(), 
+                        DisjunctForm::Element{v, neg}) != form.elements.end();
+            });
+}
+
+std::string to_string(const DisjunctForm& form, Variable v, bool neg = false);
+
+struct NegVar {
+    Variable v;
+    bool neg = false;
+
+    bool operator == (const NegVar& other) const {
+        return v == other.v && neg == other.neg;
+    }
+};
+
+std::vector<std::vector<DisjunctForm>::const_iterator> 
+resolution(const std::vector<DisjunctForm>& forms, const std::vector<NegVar>& list);
 
 } // namespace solving
 } // namespace ai
