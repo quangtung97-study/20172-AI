@@ -241,13 +241,13 @@ TEST(ZOL, search_for_occurence) {
     CNF(f);
     auto forms = to_disjunction_list(f);
 
-    auto it = search_for_occurence(forms.begin(), forms.end(), a);
+    auto it = search_for_occurence(forms.begin(), forms.end(), {a});
     ASSERT_EQ(it, forms.begin());
 
-    it = search_for_occurence(forms.begin(), forms.end(), a, true);
+    it = search_for_occurence(forms.begin(), forms.end(), {a, true});
     ASSERT_EQ(it, forms.end());
 
-    it = search_for_occurence(forms.begin(), forms.end(), c, true);
+    it = search_for_occurence(forms.begin(), forms.end(), {c, true});
     ASSERT_EQ(it, forms.begin() + 1);
 }
 
@@ -255,23 +255,176 @@ TEST(ZOL, to_string) {
     VAR(a); VAR(b); VAR(c); VAR(d);
     DisjunctForm f = {a, Not(b), c};
 
-    auto s = to_string(f, d);
+    auto s = to_string(f, {d});
     ASSERT_EQ(s, "");
 
-    s = to_string(f, c, false);
+    s = to_string(f, {c, false});
     ASSERT_EQ(s, "~a & b -> c");
     
     f = {a, b, Not(c), Not(d)};;
-    s = to_string(f, d, true);
+    s = to_string(f, {d, true});
     ASSERT_EQ(s, "~a & ~b & c -> ~d");
 }
 
-TEST(ZOL, resolution) {
+TEST(ZOL, NegVar_lessthan) {
+    VAR(a); VAR(b); 
+    NegVar v1 = {a, false};
+    NegVar v2 = {a, true};
+    NegVar v3 = {b, false};
+    ASSERT_TRUE(v1 < v2);
+    ASSERT_FALSE(v3 < v1);
+    ASSERT_TRUE(v1 < v3);
+}
+
+Premise premise_of(const DisjunctForm& f, const NegVar& conclusion);
+
+TEST(ZOL, premise_of) {
+    VAR(a); VAR(b); VAR(c);
+    DisjunctForm f = {a, b, Not(c)};
+
+    Premise compared = {{a, true}, {c, false}};
+    ASSERT_EQ(premise_of(f, b), compared);
+}
+
+bool in(const NegVar& v, const Premise& p);
+
+TEST(ZOL, negvar_in_premise) {
+    VAR(a); VAR(b); VAR(c);
+    Premise p = {a, b, {c, true}};
+    ASSERT_TRUE(in(a, p));
+    ASSERT_FALSE(in(c, p));
+}
+
+DisjunctFormIt find_premise(const std::vector<DisjunctForm>& rules, 
+        const NegVar& conclusion, Premise& premise);
+
+TEST(ZOL, find_premise) {
     VAR(a); VAR(b); VAR(c); VAR(d);
     DisjunctForm f = {a, Not(b), c};
-    std::vector<DisjunctForm> forms = {f};
-    auto it_list = resolution(forms, {{c, false}});
-    // ASSERT_EQ(it_list[0], forms.begin());
+    DisjunctForm g = {Not(a), b, d};
+    DisjunctForm h = {Not(b), c, d};
+    std::vector<DisjunctForm> rules = {g, f, h};
+
+    Premise p;
+    auto it = find_premise(rules, c, p);
+    ASSERT_TRUE(it == rules.begin() + 1);
+    Premise compared = {{a, true}, b};
+    ASSERT_EQ(p, compared);
+}
+
+TraceIt find_rule_contains(TraceIt first, TraceIt last, 
+        const NegVar& v, Premise& premise, NegVar& conclusion);
+
+TEST(ZOL, find_rule_contains) {
+    VAR(a); VAR(b); VAR(c); VAR(d); VAR(e); VAR(e2);
+    DisjunctForm f = {a, Not(b), c};
+    DisjunctForm g = {Not(a), d};
+    DisjunctForm h = {b, Not(e), Not(e2)};
+    std::vector<DisjunctForm> rules = {f, g, h};
+
+    std::vector<Trace> traces = {
+        {c, rules.begin()}, 
+        {{a, true}, rules.begin() + 1},
+        {b, rules.begin() + 2}
+    };
+
+    Premise premise;
+    NegVar conclusion;
+    auto it = find_rule_contains(traces.rbegin(), traces.rend(), e, premise, conclusion);
+    ASSERT_EQ(it, traces.rbegin());
+}
+
+DisjunctFormIt find_next_rule(DisjunctFormIt first, DisjunctFormIt last,
+        const NegVar& conclusion, Premise& premise);
+
+TEST(ZOL, find_next_rule) {
+    VAR(a); VAR(b); VAR(c); VAR(d); VAR(e);
+    DisjunctForm f = {a, Not(b), c};
+    DisjunctForm g = {Not(a), d};
+    DisjunctForm h = {b, Not(e), c};
+    std::vector<DisjunctForm> rules = {f, g, h};
+
+    Premise premise;
+    auto it = find_next_rule(rules.begin() + 1, rules.end(), c, premise);
+    ASSERT_EQ(it, rules.begin() + 2);
+    Premise compared = {{b, true}, e};
+    ASSERT_EQ(premise, compared);
+}
+
+TEST(ZOL, reuse_vector_after_move) {
+    std::vector<int> vec = {1, 2, 3, 4};
+    auto tmp = std::move(vec);
+    vec.clear();
+    ASSERT_EQ(vec.size(), 0);
+    vec.push_back(10);
+    ASSERT_EQ(vec[0], 10);
+}
+
+TEST(ZOL, resolve) {
+    VAR(a); VAR(b); VAR(c); VAR(d); VAR(e);
+
+    std::vector<DisjunctForm> rules = {};
+    auto traces = resolve(rules, {{c, false}}, {{c, false}});
+    ASSERT_EQ(traces.size(), 0);
+
+    rules = {
+        {Not(a), b}
+    };
+
+    std::vector<NegVar> assumptions = {a};
+    std::vector<NegVar> conclusions = {b};
+
+    traces = resolve(rules, assumptions, conclusions);
+    ASSERT_EQ(traces.size(), 1);
+    Trace compared{b, rules.begin()};
+    ASSERT_TRUE(traces[0] == compared);
+
+    rules = {
+        {Not(a), Not(b), c},
+        {Not(b), Not(e), c},
+    };
+
+    assumptions = {b, e};
+    conclusions = {c};
+    traces = resolve(rules, assumptions, conclusions);
+    ASSERT_EQ(traces.size(), 1);
+    compared = {c, rules.begin() + 1};
+    ASSERT_TRUE(traces[0] == compared);
+}
+
+TEST(ZOL, resolve_fail) {
+    VAR(a); VAR(b); VAR(c); VAR(d); VAR(e);
+    std::vector<DisjunctForm> rules = {
+        {Not(a), Not(b), c},
+        {Not(b), Not(e), c},
+    };
+    std::vector<NegVar> assumptions = {b};
+    std::vector<NegVar> conclusions = {c};
+    try {
+        auto traces = resolve(rules, assumptions, conclusions);
+    }
+    catch (const char *s) {
+        ASSERT_STREQ(s, "Can't find a resolution");
+        return;
+    }
+    catch (...) {
+        FAIL() << "resolve should throw";
+    }
+    FAIL() << "resolve should throw";
+}
+
+TEST(ZOL, traces_to_string) {
+    VAR(a); VAR(b); VAR(c); VAR(d); VAR(e);
+    std::vector<DisjunctForm> rules = {
+        {Not(a), Not(b), c},
+        {Not(b), Not(e), c},
+    };
+    std::vector<Trace> traces = {
+        {c, rules.begin()},
+        {c, rules.begin() + 1},
+    };
+    auto s = to_string(traces);
+    ASSERT_EQ(s, "a & b -> c\nb & e -> c");
 }
 
 } // namespace solving

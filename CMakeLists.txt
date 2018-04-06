@@ -34,6 +34,13 @@ target_link_libraries(gomoku_gui
     ai-game-gomoku-gui
 )
 
+add_executable(solving
+    src/ai/solving/main.cpp
+)
+
+target_link_libraries(solving
+    ai-solving
+)
 
 enable_testing()
 add_subdirectory(tests)

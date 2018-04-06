@@ -397,13 +397,13 @@ DisjunctForm::DisjunctForm(std::initializer_list<Formula> forms) {
     for (auto& f: forms) {
         if (f.data_type_info() == ATOMIC_NODE) {
             auto& node = static_cast<const detail::AtomicNode&>(*f.data());
-            elements.push_back({node.var_, false});
+            vars.push_back({node.var_, false});
         }
         else if (f.data_type_info() == NOT_NODE 
                 && child_formula(f).data_type_info() == ATOMIC_NODE) {
             auto& node = static_cast<const detail::AtomicNode&>(
                     *child_formula(f).data());
-            elements.push_back({node.var_, true});
+            vars.push_back({node.var_, true});
         }
         else {
             throw InitError();
@@ -412,10 +412,10 @@ DisjunctForm::DisjunctForm(std::initializer_list<Formula> forms) {
 }
 
 bool DisjunctForm::operator == (const DisjunctForm& other) const {
-    return std::all_of(elements.begin(), elements.end(), 
+    return std::all_of(vars.begin(), vars.end(), 
             [&other](auto& f) {
-                auto it = std::find(other.elements.begin(), other.elements.end(), f);
-                return it != other.elements.end();
+                auto it = std::find(other.vars.begin(), other.vars.end(), f);
+                return it != other.vars.end();
             });
 }
 
@@ -427,11 +427,11 @@ void collect_variables(const Formula& f, DisjunctForm& result) {
     if (f.data_type_info() == NOT_NODE) {
         auto& node = static_cast<const detail::NotNode&>(*f.data());
         auto& child = static_cast<const detail::AtomicNode&>(*node.child_.data());
-        result.elements.push_back({child.var_, true});
+        result.vars.push_back({child.var_, true});
     }
     else if (f.data_type_info() == ATOMIC_NODE) {
         auto& node = static_cast<const detail::AtomicNode&>(*f.data());
-        result.elements.push_back({node.var_, false});
+        result.vars.push_back({node.var_, false});
     }
     else if (f.data_type_info() == OR_NODE) {
         collect_variables(left_formula(f), result);
@@ -457,14 +457,13 @@ std::vector<DisjunctForm> to_disjunction_list(const Formula& cnf) {
     return result;
 }
 
-std::string to_string(const DisjunctForm& form, Variable v, bool neg) {
-    auto find_it = std::find(form.elements.begin(), form.elements.end(), 
-            DisjunctForm::Element{v, neg});
-    if (find_it == form.elements.end())
+std::string to_string(const DisjunctForm& form, NegVar v) {
+    auto find_it = std::find(form.vars.begin(), form.vars.end(), v);
+    if (find_it == form.vars.end())
         return "";
 
     std::string result;
-    for (auto it = form.elements.begin(); it != form.elements.end(); ++it) {
+    for (auto it = form.vars.begin(); it != form.vars.end(); ++it) {
         if (it == find_it)
             continue;
 
@@ -477,18 +476,143 @@ std::string to_string(const DisjunctForm& form, Variable v, bool neg) {
     }
 
     result += " -> ";
-    if (neg)
+    if (v.neg)
         result.push_back('~');
-    result += v.name();
+    result += v.v.name();
     return result;
 }
 
-std::vector<std::vector<DisjunctForm>::const_iterator> 
-resolution(const std::vector<DisjunctForm>& forms, const std::vector<NegVar>& list) {
-    std::vector<std::vector<DisjunctForm>::const_iterator> result;
+std::string to_string(const std::vector<Trace>& traces) {
+    std::string result;
+    for (auto& trace: traces) {
+        result += to_string(*trace.it, trace.v);
+        result += '\n';
+    }
+    result.pop_back();
     return result;
+}
+
+Premise premise_of(const DisjunctForm& f, const NegVar& conclusion) {
+    Premise result;
+    result.reserve(f.vars.size() - 1);
+
+    std::copy_if(f.vars.begin(), f.vars.end(), std::back_inserter(result),
+            [&conclusion](auto& v) {
+                return v != conclusion; 
+            });
+
+    std::transform(result.begin(), result.end(), result.begin(), 
+            [](NegVar& v) { return NegVar{v.v, !v.neg}; });
+    return result;
+}
+
+bool in(const NegVar& v, const Premise& p) {
+    return std::find(p.begin(), p.end(), v) != p.end();
+}
+
+bool contains(const std::vector<NegVar>& vec, const NegVar& v) {
+    return std::find(vec.begin(), vec.end(), v) != vec.end();
+}
+
+DisjunctFormIt find_premise(const std::vector<DisjunctForm>& rules, 
+        const NegVar& conclusion, Premise& premise) 
+{
+    auto it = std::find_if(rules.begin(), rules.end(), 
+            [&conclusion](auto& v) { return contains(v.vars, conclusion); });
+
+    if (it == rules.end())
+        return rules.end();
+    
+    premise = premise_of(*it, conclusion);
+    return it;
+}
+
+TraceIt find_rule_contains(TraceIt first, TraceIt last, 
+        const NegVar& v, Premise& premise, NegVar& conclusion)
+{
+    auto it = std::find_if(first, last, 
+            [&v](auto& trace) { return in(v, premise_of(*trace.it, trace.v)); });
+    if (it != last) {
+        premise = premise_of(*it->it, it->v);
+        conclusion = it->v;
+    }
+    return it;
+}
+
+DisjunctFormIt find_next_rule(DisjunctFormIt first, DisjunctFormIt last,
+        const NegVar& conclusion, Premise& premise)
+{
+    auto it = std::find_if(first, last, 
+            [&conclusion](auto& v) { return contains(v.vars, conclusion); });
+    if (it != last) {
+        premise = premise_of(*it, conclusion);
+    }
+    return it;
+}
+
+std::vector<Trace> resolve(const std::vector<DisjunctForm>& rules, 
+                        const std::vector<NegVar>& assumptions_,
+                        const std::vector<NegVar>& conclusions_) 
+{
+    std::vector<NegVar> assumptions = assumptions_;
+    std::vector<NegVar> conclusions = conclusions_;
+
+    std::sort(assumptions.begin(), assumptions.end());
+    std::sort(conclusions.begin(), conclusions.end());
+
+    std::vector<Trace> traces;
+    std::vector<NegVar> goal;
+    goal.reserve(100);
+    
+    std::copy(conclusions.begin(), conclusions.end(), std::back_inserter(goal));
+
+    while (!goal.empty()) {
+        auto f = goal.front();
+        goal.erase(goal.begin());
+
+        if (std::binary_search(assumptions.begin(), assumptions.end(), f)) 
+            continue;
+
+        Premise premise;
+        auto it = find_premise(rules, f, premise);
+
+        if (it != rules.end()) {
+            std::sort(premise.begin(), premise.end());
+            set_union(goal, premise);
+            set_difference(goal, assumptions);
+
+            traces.push_back({f, it});
+            continue;
+        }
+
+    retry:
+        NegVar g;
+        Premise leftk, leftl;
+        auto trace_it = find_rule_contains(traces.crbegin(), traces.crend(), f, leftk, g);
+        auto remove_it = std::remove(traces.begin(), traces.end(), Trace{g, trace_it->it});
+        traces.erase(remove_it, traces.end());
+
+        auto next_rule_it = find_next_rule(trace_it->it + 1, rules.end(), g, leftl);
+        if (next_rule_it != rules.end()) {
+            std::sort(leftk.begin(), leftk.end());
+            set_difference(goal, leftk);
+
+            std::sort(leftl.begin(), leftl.end());
+            set_union(goal, leftl);
+
+            set_difference(goal, assumptions);
+
+            traces.push_back({g, next_rule_it});
+            continue;
+        }
+
+        if (in(g, conclusions)) {
+            throw "Can't find a resolution";
+        }
+        goto retry;
+    }
+    return traces;
 }
 
 } // namespace solving
 } // namespace ai
-

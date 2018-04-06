@@ -14,6 +14,8 @@ class Variable {
 private:
     std::string name_;
 public:
+    Variable() = default;
+
     Variable(std::string name): name_{std::move(name)} {}
 
     std::string name() const { return name_; }
@@ -100,6 +102,34 @@ void push_down_not(Formula& f);
 
 void CNF(Formula& f);
 
+struct NegVar {
+    Variable v;
+    bool neg = false;
+
+    NegVar() = default;
+
+    NegVar(const Variable& var): v{var} {}
+
+    NegVar(const Variable& v, bool neg): v{v}, neg{neg} {}
+
+    bool operator == (const NegVar& other) const {
+        return v == other.v && neg == other.neg;
+    }
+    
+    bool operator != (const NegVar& other) const {
+        return v != other.v || neg != other.neg;
+    }
+
+    bool operator < (const NegVar& other) const {
+        if (v < other.v)
+            return true;
+        else if (v == other.v) 
+            return neg < other.neg;
+        else 
+            return false;
+    }
+};
+
 struct DisjunctForm {
     class InitError: public std::exception {
     public:
@@ -107,16 +137,8 @@ struct DisjunctForm {
             return "can't init disjunction form";
         }
     };
-    struct Element {
-        Variable v;
-        bool neg = false;
 
-        bool operator == (const Element& other) const {
-            return v == other.v && neg == other.neg;
-        }
-    };
-
-    std::vector<Element> elements;
+    std::vector<NegVar> vars;
 
     DisjunctForm() = default;
 
@@ -127,29 +149,64 @@ struct DisjunctForm {
     bool operator != (const DisjunctForm& other) const;
 };
 
+using DisjunctFormIt = std::vector<DisjunctForm>::const_iterator;
+
+using Premise = std::vector<NegVar>;
+
 std::vector<DisjunctForm> to_disjunction_list(const Formula& cnf);
 
 template <typename It>
-auto search_for_occurence(It first, It last, Variable v, bool neg = false) {
-    return std::find_if(first, last, [&v, neg](auto form) {
-                return std::find(form.elements.begin(), form.elements.end(), 
-                        DisjunctForm::Element{v, neg}) != form.elements.end();
-            });
+auto search_for_occurence(It first, It last, NegVar v) {
+    return std::find_if(first, last, [&v](auto form) {
+                return std::find(form.vars.begin(), form.vars.end(), v) 
+                        != form.vars.end(); });
 }
 
-std::string to_string(const DisjunctForm& form, Variable v, bool neg = false);
+std::string to_string(const DisjunctForm& form, NegVar v);
 
-struct NegVar {
-    Variable v;
-    bool neg = false;
+struct Trace {
+    NegVar v;
+    std::vector<DisjunctForm>::const_iterator it;
 
-    bool operator == (const NegVar& other) const {
-        return v == other.v && neg == other.neg;
+    bool operator == (const Trace& other) {
+        return v == other.v && it == other.it;
+    }
+
+    bool operator < (const Trace& other) {
+        if (v < other.v)
+            return true;
+        else if (v == other.v)
+            return it < other.it;
+        else
+            return false;
     }
 };
 
-std::vector<std::vector<DisjunctForm>::const_iterator> 
-resolution(const std::vector<DisjunctForm>& forms, const std::vector<NegVar>& list);
+using TraceIt = std::vector<Trace>::const_reverse_iterator;
+
+std::string to_string(const std::vector<Trace>& traces);
+
+std::vector<Trace> resolve(const std::vector<DisjunctForm>& rules, 
+        const std::vector<NegVar>& assumptions,
+        const std::vector<NegVar>& conclusions);
+
+template <typename A, typename B>
+void set_union(A&& a, B&& b) {
+    auto tmp = std::move(a);
+    a.clear();
+    a.reserve(tmp.size() + b.size());
+    std::set_union(tmp.begin(), tmp.end(), 
+            b.begin(), b.end(), std::back_inserter(a));
+}
+
+template <typename A, typename B>
+void set_difference(A&& a, B&& b) {
+    auto tmp = std::move(a);
+    a.clear();
+    a.reserve(tmp.size());
+    std::set_difference(tmp.begin(), tmp.end(), 
+            b.begin(), b.end(), std::back_inserter(a));
+}
 
 } // namespace solving
 } // namespace ai
