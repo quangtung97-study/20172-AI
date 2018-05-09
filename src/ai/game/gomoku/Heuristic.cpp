@@ -12,10 +12,10 @@ Cell inverse_of(Cell cell) {
     return (Cell)(-(char)cell);
 }
 
-LineView maximum_view(LineView line_view, size_t size) {
+LineView maximum_view(LineView segment, size_t size) {
     int max = 0;
     LineView::iterator new_begin, new_end;
-    for (auto it = line_view.begin(); it != std::prev(line_view.end(), size); ++it) {
+    for (auto it = segment.begin(); it != std::prev(segment.end(), size); ++it) {
         auto sum = std::accumulate(it, std::next(it, size), 0,
             [](int sum, Cell cell) { 
                 return cell == Cell::NONE ? sum : sum + 1; 
@@ -30,15 +30,17 @@ LineView maximum_view(LineView line_view, size_t size) {
     return LineView{new_begin, new_end};
 }
 
-std::bitset<MAX_BIT_COUNT> get_segment_bitset(LineView line_view, Cell compared_value)
+std::bitset<MAX_BIT_COUNT> get_segment_bitset(
+        LineView segment, Cell compared_value, size_t& cell_count)
 {
     std::bitset<MAX_BIT_COUNT> cells = 0;
-    if (line_view.end() - line_view.begin() > MAX_BIT_COUNT) {
-        line_view = maximum_view(line_view, MAX_BIT_COUNT);
+    cell_count = segment.end() - segment.begin();
+    if (cell_count > MAX_BIT_COUNT) {
+        segment = maximum_view(segment, MAX_BIT_COUNT);
     }
-    for (auto it = line_view.begin(); it != line_view.end(); ++it) 
+    for (auto it = segment.begin(); it != segment.end(); ++it) 
         if (*it == compared_value)
-            cells[std::distance(line_view.begin(), it)] = 1;
+            cells[std::distance(segment.begin(), it)] = 1;
     return cells;
 }
 
@@ -94,7 +96,10 @@ SegmentInfoList get_segment_infos(const Line& line, Cell compared_value) {
         auto segment_end = reverse_search(it, segment_begin, compared_value);
 
         SegmentInfo info;
-        info.cells = get_segment_bitset(LineView{segment_begin, segment_end}, compared_value);
+        size_t cell_count;
+        info.cells = get_segment_bitset(
+                LineView{segment_begin, segment_end}, 
+                compared_value, cell_count);
         info.distances[0] = left_distance_of(segment_begin, line.begin());
         info.distances[1] = right_distance_of(segment_end, line.end());
         result.push_back(info);
@@ -174,10 +179,9 @@ float score_of(SegmentInfo segment) {
     auto factor = scaling_factor_of(
             segment.distances[0], segment.distances[1]);
     if (unscaling_score == infinity) {
-        if (factor == 0)
+        if (segment.cell_count == 5 && factor == 0)
             return 0;
-        else 
-            return infinity;
+        return infinity;
     }
     return unscaling_score * factor;
 }

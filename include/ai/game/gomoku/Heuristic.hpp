@@ -37,9 +37,12 @@ struct SegmentInfo {
     } distances[2] = {Infinity, Infinity};
 
     std::bitset<MAX_BIT_COUNT> cells = 0;
+
+    size_t cell_count = 0;
 };
 
-std::bitset<MAX_BIT_COUNT> get_segment_bitset(LineView line_view, Cell compared_value);
+std::bitset<MAX_BIT_COUNT> get_segment_bitset(
+        LineView line_view, Cell compared_value, size_t& cell_count);
 
 typedef std::vector<SegmentInfo> SegmentInfoList;
 

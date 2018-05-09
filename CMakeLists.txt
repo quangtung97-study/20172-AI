@@ -5,6 +5,7 @@ project(AI)
 set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_DEBUG "-O3")
 
 include_directories(./include)
 

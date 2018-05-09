@@ -19,7 +19,8 @@ struct Action {
 
 bool operator == (Action action1, Action action2);
 
-static const int allow_distance = 1;
+static const int allow_distance = 2;
+static const unsigned int alphabeta_depth = 2;
 
 class State {
 private:

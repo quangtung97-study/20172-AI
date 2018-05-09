@@ -47,6 +47,7 @@ TEST(State, accessor) {
 
 TEST(State, legal_actions) {
     State state;
+    const size_t width = allow_distance * 2 + 1;
 
     auto actions = state.legal_actions();
     ASSERT_EQ(actions.size(), 1);
@@ -54,24 +55,26 @@ TEST(State, legal_actions) {
 
     state.move({0, 0});
     actions = state.legal_actions();
-    ASSERT_EQ(actions.size(), 3 * 3 - 1);
+    ASSERT_EQ(actions.size(), width * width - 1);
     assert_contains(actions, {-1, 1});
     assert_contains(actions, {1, 1});
     assert_not_contains(actions, {0, 0});
 
     state.move({1, 0});
     actions = state.legal_actions();
-    ASSERT_EQ(actions.size(), 4 * 3 - 2);
+    ASSERT_EQ(actions.size(), (width + 1) * width - 2);
     assert_not_contains(actions, {0, 0});
     assert_not_contains(actions, {1, 0});
     assert_contains(actions, {2, -1});
 }
 
 TEST(State, unmove) {
+    const size_t width = allow_distance * 2 + 1;
+
     State state;
     state.move({0, 0});
     auto actions = state.legal_actions();
-    ASSERT_EQ(actions.size(), 3 * 3 - 1);
+    ASSERT_EQ(actions.size(), width * width - 1);
 
     state.unmove();
     actions = state.legal_actions();

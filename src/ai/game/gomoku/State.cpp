@@ -180,8 +180,6 @@ float alphabeta(State& state, unsigned int depth, float alpha, float beta) {
     }
 }
 
-const unsigned int alphabeta_depth = 3;
-
 Action AI_next_move(State& state) {
     assert (state.current_player() == Cell::AI);
 
@@ -193,11 +191,6 @@ Action AI_next_move(State& state) {
         state.move(action);
         auto move_guard = gsl::finally([&state]() { state.unmove(); });
         float new_hvalue = alphabeta(state, alphabeta_depth, -infinity, infinity);
-
-        // std::cout << "---------------------------------------------" << std::endl;
-        // std::cout << action.x << " " << action.y << std::endl;
-        // std::cout << new_hvalue << std::endl;
-        // std::cout << "---------------------------------------------" << std::endl;
 
         if (new_hvalue > prev_hvalue) {
             result = action;

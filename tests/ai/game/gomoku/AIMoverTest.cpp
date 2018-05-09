@@ -15,7 +15,7 @@ TEST(AIMover, moved) {
     ASSERT_EQ(mover.moved(), false);
     ASSERT_EQ(mover.thinking(), true);
 
-    std::this_thread::sleep_for(10ms);
+    std::this_thread::sleep_for(30ms);
     ASSERT_EQ(mover.thinking(), false);
     ASSERT_EQ(mover.moved(), true);
     auto recent = mover.recent_move();

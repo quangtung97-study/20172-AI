@@ -11,27 +11,39 @@ const auto O = Cell::HUMAN;
 
 TEST(Heuristic, get_segment_bitset) {
     ASSERT_EQ(sizeof(Cell), 1);
+    size_t cell_count;
 
-    auto cells = get_segment_bitset({{X}, 0, 1}, X);
+    auto cells = get_segment_bitset({{X}, 0, 1}, X, cell_count);
     ASSERT_EQ(cells, 0b1);
+    ASSERT_EQ(cell_count, 1);
 
-    cells = get_segment_bitset({{X, X}, 0, 2}, X);
+    cells = get_segment_bitset({{X, X}, 0, 2}, X, cell_count);
     ASSERT_EQ(cells, 0b11);
+    ASSERT_EQ(cell_count, 2);
     
-    cells = get_segment_bitset({{X, N, X, X}, 0, 4}, X);
+    cells = get_segment_bitset({{X, N, X, X}, 0, 4}, X, cell_count);
     ASSERT_EQ(cells, 0b1101);
+    ASSERT_EQ(cell_count, 4);
 
-    cells = get_segment_bitset({{X, X, N, X, N, X}, 0, 6}, X);
+    cells = get_segment_bitset({{X, X, N, X, N, X}, 0, 6}, X, cell_count);
     ASSERT_EQ(cells, 0b1011);
+    ASSERT_EQ(cell_count, 6);
 
-    cells = get_segment_bitset({{X, X, N, X, N, X}, 1, 4}, X);
+    cells = get_segment_bitset({{X, X, N, X, N, X}, 1, 4}, X, cell_count);
     ASSERT_EQ(cells, 0b101);
+    ASSERT_EQ(cell_count, 3);
 
-    cells = get_segment_bitset({{O, O, N, O, N, O}, 1, 4}, O);
+    cells = get_segment_bitset({{O, O, N, O, N, O}, 1, 4}, O, cell_count);
     ASSERT_EQ(cells, 0b101);
+    ASSERT_EQ(cell_count, 3);
 
-    cells = get_segment_bitset({{O, O, N, O, N, O}, 1, 6}, O);
+    cells = get_segment_bitset({{O, O, N, O, N, O}, 1, 6}, O, cell_count);
     ASSERT_EQ(cells, 0b10101);
+    ASSERT_EQ(cell_count, 5);
+
+    cells = get_segment_bitset({{O, O, O, O, O, O}, 0, 6}, O, cell_count);
+    ASSERT_EQ(cells, 0b11111);
+    ASSERT_EQ(cell_count, 6);
 }
 
 LineView maximum_view(LineView line_view, size_t size);
@@ -139,6 +151,8 @@ int index_in_weight_table_of(SegmentInfo segment);
 TEST(Heuristic, segment_scoring_one) {
     SegmentInfo segment;
     segment.cells = 0b1;
+    segment.cell_count = 1;
+
     segment.distances[0] = SegmentInfo::Infinity;
     segment.distances[1] = SegmentInfo::Infinity;
     ASSERT_DOUBLE_EQ(score_of(segment), 1);
@@ -174,6 +188,140 @@ TEST(Heuristic, segment_scoring_one) {
     segment.distances[0] = SegmentInfo::One;
     segment.distances[1] = SegmentInfo::One;
     ASSERT_DOUBLE_EQ(score_of(segment), 0.5);
+}
+
+TEST(Heuristic, segment_scoring_4) {
+    SegmentInfo segment;
+    const float infinity = std::numeric_limits<float>::infinity();
+
+    segment.cells = 0b1111;
+    segment.cell_count = 4;
+
+    const auto nan = std::numeric_limits<float>::quiet_NaN();
+
+    segment.distances[0] = SegmentInfo::Infinity;
+    segment.distances[1] = SegmentInfo::Infinity;
+    ASSERT_NE(score_of(segment), nan);
+
+    segment.distances[0] = SegmentInfo::One;
+    segment.distances[1] = SegmentInfo::Infinity;
+    ASSERT_NE(score_of(segment), nan);
+
+    segment.distances[0] = SegmentInfo::Infinity;
+    segment.distances[1] = SegmentInfo::One;
+    ASSERT_NE(score_of(segment), nan);
+
+    segment.distances[0] = SegmentInfo::Zero;
+    segment.distances[1] = SegmentInfo::Infinity;
+    ASSERT_NE(score_of(segment), nan);
+
+    segment.distances[0] = SegmentInfo::Infinity;
+    segment.distances[1] = SegmentInfo::Zero;
+    ASSERT_NE(score_of(segment), nan);
+
+    segment.distances[0] = SegmentInfo::Zero;
+    segment.distances[1] = SegmentInfo::Zero;
+    ASSERT_NE(score_of(segment), nan);
+
+    segment.distances[0] = SegmentInfo::One;
+    segment.distances[1] = SegmentInfo::Zero;
+    ASSERT_NE(score_of(segment), nan);
+
+    segment.distances[0] = SegmentInfo::Zero;
+    segment.distances[1] = SegmentInfo::One;
+    ASSERT_NE(score_of(segment), nan);
+
+    segment.distances[0] = SegmentInfo::One;
+    segment.distances[1] = SegmentInfo::One;
+    ASSERT_NE(score_of(segment), nan);
+}
+
+TEST(Heuristic, segment_scoring_5) {
+    SegmentInfo segment;
+    const float infinity = std::numeric_limits<float>::infinity();
+
+    segment.cells = 0b11111;
+    segment.cell_count = 5;
+
+    segment.distances[0] = SegmentInfo::Infinity;
+    segment.distances[1] = SegmentInfo::Infinity;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::One;
+    segment.distances[1] = SegmentInfo::Infinity;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::Infinity;
+    segment.distances[1] = SegmentInfo::One;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::Zero;
+    segment.distances[1] = SegmentInfo::Infinity;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::Infinity;
+    segment.distances[1] = SegmentInfo::Zero;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::Zero;
+    segment.distances[1] = SegmentInfo::Zero;
+    ASSERT_FLOAT_EQ(score_of(segment), 0);
+
+    segment.distances[0] = SegmentInfo::One;
+    segment.distances[1] = SegmentInfo::Zero;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::Zero;
+    segment.distances[1] = SegmentInfo::One;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::One;
+    segment.distances[1] = SegmentInfo::One;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+}
+
+TEST(Heuristic, segment_scoring_6) {
+    SegmentInfo segment;
+    const float infinity = std::numeric_limits<float>::infinity();
+
+    segment.cells = 0b11111;
+    segment.cell_count = 6;
+
+    segment.distances[0] = SegmentInfo::Infinity;
+    segment.distances[1] = SegmentInfo::Infinity;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::One;
+    segment.distances[1] = SegmentInfo::Infinity;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::Infinity;
+    segment.distances[1] = SegmentInfo::One;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::Zero;
+    segment.distances[1] = SegmentInfo::Infinity;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::Infinity;
+    segment.distances[1] = SegmentInfo::Zero;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::Zero;
+    segment.distances[1] = SegmentInfo::Zero;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::One;
+    segment.distances[1] = SegmentInfo::Zero;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::Zero;
+    segment.distances[1] = SegmentInfo::One;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
+
+    segment.distances[0] = SegmentInfo::One;
+    segment.distances[1] = SegmentInfo::One;
+    ASSERT_FLOAT_EQ(score_of(segment), infinity);
 }
 
 } // namespace gomoku
