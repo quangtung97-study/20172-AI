@@ -132,7 +132,6 @@ float get_sum_lines_hvalue_at(
 {
     float result = 0.0f;
     static Line line(100);
-    line.clear();
 
     get_vertical_line(line, cells, action);
     result += score_of_line(line, current_player);

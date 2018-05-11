@@ -44,6 +44,10 @@ TEST(Heuristic, get_segment_bitset) {
     cells = get_segment_bitset({{O, O, O, O, O, O}, 0, 6}, O, cell_count);
     ASSERT_EQ(cells, 0b11111);
     ASSERT_EQ(cell_count, 6);
+
+    cells = get_segment_bitset({{X, O, O, O, O, O, X}, 1, 6}, O, cell_count);
+    ASSERT_EQ(cells, 0b11111);
+    ASSERT_EQ(cell_count, 5);
 }
 
 LineView maximum_view(LineView line_view, size_t size);
@@ -194,8 +198,6 @@ TEST(Heuristic, segment_scoring_one) {
 
 TEST(Heuristic, segment_scoring_4) {
     SegmentInfo segment;
-    const float infinity = std::numeric_limits<float>::infinity();
-
     segment.cells = 0b1111;
     segment.cell_count = 4;
 

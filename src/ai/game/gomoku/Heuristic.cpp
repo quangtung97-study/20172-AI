@@ -144,21 +144,21 @@ float unscaling_score_of(std::bitset<MAX_BIT_COUNT> cells) {
             return 3;
 
         case 0b111:
-            return 8;
+            return 15;
         case 0b1101:
         case 0b1011:
-            return 8;
+            return 15;
         case 0b11001:
         case 0b10011:
-            return 7;
+            return 9;
         case 0b10101:
-            return 5;
+            return 7;
 
         case 0b1111:
             return 32;
         case 0b11101:
         case 0b10111:
-            return 30;
+            return 32;
         case 0b11011:
             return 30;
 
@@ -187,6 +187,7 @@ float score_of(SegmentInfo segment) {
 float score_of_line(const Line& line, Cell player) {
     float result = 0.0f;
     static SegmentInfoList infos(100);
+    infos.clear();
     get_segment_infos(line, player, infos);
     for (auto info: infos)
         result += score_of(info);
