@@ -29,7 +29,7 @@ public:
     const int screen_width;
     const int screen_height;
     const int cell_size = 30;
-    SDL_Texture *N, *O, *X;
+    SDL_Texture *N, *N_gray, *O, *X, *X_gray;
 
 public:
     MatrixRenderer(

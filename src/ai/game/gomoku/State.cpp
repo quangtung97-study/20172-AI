@@ -196,6 +196,8 @@ Action AI_next_move(State& state) {
             result = action;
             prev_hvalue = new_hvalue;
         }
+        if (prev_hvalue == infinity)
+            return result;
     }
     return result;
 }

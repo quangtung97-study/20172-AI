@@ -57,37 +57,39 @@ TEST(Heuristic, maximum_view) {
 
 TEST(Heuristic, get_segment_infos) {
     Line line1{X, X, O, N, X, N, X, X};
-    auto ai_segments = get_segment_infos(line1, X);
+    SegmentInfoList ai_segments;
+    get_segment_infos(line1, X, ai_segments);
     ASSERT_EQ(ai_segments.size(), 2);
     ASSERT_EQ(ai_segments[0].cells, 0b11);
     ASSERT_EQ(ai_segments[1].cells, 0b1101);
 
     Line line2{O};
-    ai_segments = get_segment_infos(line2, X);
+    get_segment_infos(line2, X, ai_segments);
     ASSERT_EQ(ai_segments.size(), 0);
 
     Line line3{O, N, N, O};
-    ai_segments = get_segment_infos(line3, X);
+    get_segment_infos(line3, X, ai_segments);
     ASSERT_EQ(ai_segments.size(), 0);
 }
 
 TEST(Heuristic, get_segment_infos_distances) {
     Line line1{X, X, O, N, X, N, X, X};
-    auto ai_segments = get_segment_infos(line1, X);
+    SegmentInfoList ai_segments;
+    get_segment_infos(line1, X, ai_segments);
     ASSERT_EQ(ai_segments[0].distances[0], SegmentInfo::Infinity);
     ASSERT_EQ(ai_segments[0].distances[1], SegmentInfo::Zero);
     ASSERT_EQ(ai_segments[1].distances[0], SegmentInfo::One);
     ASSERT_EQ(ai_segments[1].distances[1], SegmentInfo::Infinity);
 
     Line line2{N, N, O, N, N, N, X, X, X, N, N};
-    ai_segments = get_segment_infos(line2, X);
+    get_segment_infos(line2, X, ai_segments);
     ASSERT_EQ(ai_segments.size(), 1);
     ASSERT_EQ(ai_segments[0].cells, 0b111);
     ASSERT_EQ(ai_segments[0].distances[0], SegmentInfo::Infinity);
     ASSERT_EQ(ai_segments[0].distances[1], SegmentInfo::Infinity);
 
     Line line3{N, X, X, O, N, N, X, X, N, O};
-    ai_segments = get_segment_infos(line3, X);
+    get_segment_infos(line3, X, ai_segments);
     ASSERT_EQ(ai_segments.size(), 2);
     ASSERT_EQ(ai_segments[0].cells, 0b11);
     ASSERT_EQ(ai_segments[1].cells, 0b11);

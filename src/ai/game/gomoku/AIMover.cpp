@@ -40,6 +40,9 @@ bool AIMover::thinking() const {
     return thinking_;
 }
 
+AIMover::~AIMover() {
+}
+
 } // namespace gomoku
 } // namespace game
 } // namespace ai

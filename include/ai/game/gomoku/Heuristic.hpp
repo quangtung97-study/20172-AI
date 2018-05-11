@@ -46,11 +46,11 @@ std::bitset<MAX_BIT_COUNT> get_segment_bitset(
 
 typedef std::vector<SegmentInfo> SegmentInfoList;
 
-SegmentInfoList get_segment_infos(const Line& line, Cell compared_value);
+void get_segment_infos(const Line& line, Cell compared_value, SegmentInfoList& result);
 
 float score_of(SegmentInfo segment);
 
-float score_of_line(Line line, Cell player);
+float score_of_line(const Line& line, Cell player);
 
 } // namespace gomoku
 } // namespace game

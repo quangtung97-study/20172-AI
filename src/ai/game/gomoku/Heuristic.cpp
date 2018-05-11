@@ -77,8 +77,8 @@ Line::const_iterator reverse_search(Line::const_iterator it, Line::const_iterato
     return std::find_if(rit, rend, [value](Cell cell) { return cell == value; }).base();
 }
 
-SegmentInfoList get_segment_infos(const Line& line, Cell compared_value) {
-    SegmentInfoList result;
+void get_segment_infos(const Line& line, Cell compared_value, SegmentInfoList &result) {
+    result.clear();
 
     auto it = line.begin();
     while (true) {
@@ -104,8 +104,6 @@ SegmentInfoList get_segment_infos(const Line& line, Cell compared_value) {
         info.distances[1] = right_distance_of(segment_end, line.end());
         result.push_back(info);
     }
-
-    return result;
 }
 
 float scaling_factor_of(SegmentInfo::Distance d1, SegmentInfo::Distance d2) {
@@ -139,30 +137,30 @@ float unscaling_score_of(std::bitset<MAX_BIT_COUNT> cells) {
         case 0b1:
             return 1;
         case 0b11:
-            return 2.1;
+            return 4;
         case 0b101:
-            return 2.1;
+            return 4;
         case 0b1001:
-            return 1.5;
+            return 3;
 
         case 0b111:
-            return 4.3;
+            return 8;
         case 0b1101:
         case 0b1011:
-            return 4.3;
+            return 8;
         case 0b11001:
         case 0b10011:
-            return 8.7;
+            return 7;
         case 0b10101:
-            return 3.9;
+            return 5;
 
         case 0b1111:
-            return 17.5;
+            return 32;
         case 0b11101:
         case 0b10111:
-            return 17;
+            return 30;
         case 0b11011:
-            return 17;
+            return 30;
 
         case 0b11111:
             return std::numeric_limits<float>::infinity();
@@ -178,7 +176,7 @@ float score_of(SegmentInfo segment) {
     auto unscaling_score = unscaling_score_of(segment.cells);
     auto factor = scaling_factor_of(
             segment.distances[0], segment.distances[1]);
-    if (unscaling_score == infinity) {
+    if (segment.cell_count >= 5 && unscaling_score == infinity) {
         if (segment.cell_count == 5 && factor == 0)
             return 0;
         return infinity;
@@ -186,9 +184,10 @@ float score_of(SegmentInfo segment) {
     return unscaling_score * factor;
 }
 
-float score_of_line(Line line, Cell player) {
+float score_of_line(const Line& line, Cell player) {
     float result = 0.0f;
-    auto infos = get_segment_infos(line, player);
+    static SegmentInfoList infos(100);
+    get_segment_infos(line, player, infos);
     for (auto info: infos)
         result += score_of(info);
     return result;

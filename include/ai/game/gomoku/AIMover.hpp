@@ -30,6 +30,8 @@ public:
 
     bool thinking() const;
 
+    ~AIMover();
+
 }; // class AIMover
 
 } // namespace gomoku

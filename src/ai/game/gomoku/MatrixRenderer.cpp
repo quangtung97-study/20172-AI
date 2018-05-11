@@ -20,8 +20,10 @@ MatrixRenderer::MatrixRenderer(
     matrix_.resize(matrix_size * matrix_size);
 
     N = IMG_LoadTexture(renderer_, "assets/N.png");
+    N_gray = IMG_LoadTexture(renderer_, "assets/N_gray.png");
     O = IMG_LoadTexture(renderer_, "assets/O.png");
     X = IMG_LoadTexture(renderer_, "assets/X.png");
+    X_gray = IMG_LoadTexture(renderer_, "assets/X_gray.png");
 
     reset();
 }

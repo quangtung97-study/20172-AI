@@ -8,18 +8,29 @@ namespace game {
 namespace gomoku {
 
 void SDLWrapper::move(Action action) {
-    (*matrix_renderer_)(action) = player_to_cell(state_.current_player());
-    state_.move(action);
+    (*matrix_renderer_)(action) = player_to_cell(state().current_player());
+    if (state().current_player() == Cell::HUMAN) {
+        if (game_->ai_prev_move_.has_value())
+            (*matrix_renderer_)(game_->ai_prev_move_.value()) = matrix_renderer_->X;
+    }
+    else {
+        game_->ai_prev_move_ = action;
+    }
+    state().move(action);
 }
 
 void SDLWrapper::next_game() {
     matrix_renderer_->reset();
     start_player_ = inverse_of(start_player_);
-    state_ = State{start_player_};
+    game_ = std::make_unique<Game>(start_player_);
+    ai_mover_ = std::make_unique<AIMover>(game_->state_);
 
     if (start_player_ == Cell::AI) {
-        auto action = AI_next_move(state_);
+        auto action = AI_next_move(state());
         move(action);
+    }
+    else {
+        (*matrix_renderer_)({0, 0}) = matrix_renderer_->N_gray;
     }
 
     may_drag_ = false;
@@ -28,23 +39,27 @@ void SDLWrapper::next_game() {
 
 SDL_Texture *SDLWrapper::player_to_cell(Cell player) const {
     if (player == Cell::AI)
-        return matrix_renderer_->X;
+        return matrix_renderer_->X_gray;
     else
         return matrix_renderer_->O;
 }
 
 void SDLWrapper::handle_human_move(Position pos) {
-    if (!(state_.current_player() == Cell::HUMAN))
+    if (game_->going_to_next_game_)
         return;
-    auto actions = state_.legal_actions();
+
+    if (!(state().current_player() == Cell::HUMAN))
+        return;
+    auto actions = state().legal_actions();
     auto it = std::find(actions.begin(), actions.end(), pos);
     if (it == actions.end())
         return;
 
     move(pos);
 
-    if (state_.is_terminal()) {
-        next_game();
+    if (state().is_terminal()) {
+        game_->you_won_displayed_ = true;
+        game_->going_to_next_game_ = true;
         return;
     }
 
@@ -85,6 +100,10 @@ bool SDLWrapper::handle_game_mouse_event(SDL_Event event) {
             handle_human_move(pos);
         }
 
+        if (game_->going_to_next_game_) {
+            next_game();
+        }
+
         may_drag_ = false;
         dragging_  = false;
     }
@@ -93,14 +112,20 @@ bool SDLWrapper::handle_game_mouse_event(SDL_Event event) {
 
 void SDLWrapper::init_texts() {
     TTF_Init();
-    Sans_ = TTF_OpenFont("assets/Sans.ttf", 24);
+    Sans_ = TTF_OpenFont("assets/Sans.ttf", 20);
     if (!Sans_)
         throw std::runtime_error(TTF_GetError());
 }
 
 void SDLWrapper::display_texts() {
+    guide_->render();
+
     if (ai_mover_->thinking())
         ai_thinking_->render();
+    if (game_->ai_won_displayed_)
+        ai_won_->render();
+    if (game_->you_won_displayed_)
+        you_won_->render();
 }
 
 SDLWrapper::SDLWrapper() {
@@ -120,10 +145,18 @@ SDLWrapper::SDLWrapper() {
 
     matrix_renderer_ = std::make_unique<MatrixRenderer>(renderer_, screen_width, screen_height);
 
-    ai_mover_ = std::make_unique<AIMover>(state_);
-
     ai_thinking_ = std::make_unique<TextRenderer>(
             Sans_, renderer_, "AI thinking...", SDL_Color{255, 255, 255, 255}, 10, 560);
+
+    ai_won_ = std::make_unique<TextRenderer>(
+            Sans_, renderer_, "AI won!", SDL_Color{255, 255, 255, 255}, 10, 15);
+
+    you_won_ = std::make_unique<TextRenderer>(
+            Sans_, renderer_, "you won!", SDL_Color{255, 255, 255, 255}, 10, 15);
+
+    guide_ = std::make_unique<TextRenderer>(
+            Sans_, renderer_, "F5 to reset", SDL_Color{255, 255, 255, 255}, 
+            screen_width - 100, 15);
 
     next_game();
 }
@@ -134,15 +167,20 @@ void SDLWrapper::run() {
             auto action = ai_mover_->recent_move();
             move(action);
 
-            if (state_.is_terminal())
-                next_game();
+            if (state().is_terminal()) {
+                game_->ai_won_displayed_ = true;
+                game_->going_to_next_game_ = true;
+            }
         }
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT)
                 return;
-
+            if (event.type == SDL_KEYDOWN) {
+                if (event.key.keysym.sym == SDLK_F5)
+                    next_game();
+            }
             handle_game_mouse_event(event);
         }
 
