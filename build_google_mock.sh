@@ -1,5 +1,5 @@
 WORKING_DIR=$(pwd)
-CXX=g++-5
+CXX=g++-7
 
 git clone https://github.com/google/googletest
 cd googletest
