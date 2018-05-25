@@ -5,9 +5,9 @@ language: cpp
 addons:
     apt:
         sources:
-            - ubuntu-toolchain-r-test
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
         packages:
-            - g++-7
+            - gcc-7
             - libsdl2-dev
             - libsdl2-image-dev
             - libsdl2-ttf-dev
