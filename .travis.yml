@@ -7,7 +7,7 @@ addons:
         sources:
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
         packages:
-            - gcc-7
+            - g++-7
             - libsdl2-dev
             - libsdl2-image-dev
             - libsdl2-ttf-dev
